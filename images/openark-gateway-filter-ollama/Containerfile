@@ -1,0 +1,54 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := .Release.Name }}
+{{- $version := .Release.Version }}
+
+# Be ready for building
+FROM "{{ .Values.rust.image.repo }}:{{ .Values.rust.version }}-{{ .Values.debian.image.tag }}" AS builder
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        build-essential \
+        clang \
+        cmake \
+    # Switch channel
+    && rustup default {{ .Values.rust.channel | quote }} \
+    # Enable wasm32 target
+    && rustup target add 'wasm32-unknown-unknown' \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/* /var/log/*
+
+# Load source files
+ADD . /src
+WORKDIR /src
+
+# Build it!
+{{ include "container.run.cached.rust" . }} \
+    # Create an output directory
+    mkdir /out \
+    # Disable binary
+    && sed -i 's/^default-members *= */# \0/g' ./Cargo.toml \
+    # Disable contribs
+    && sed -i 's/^members *= *.\[.\+\]$/members = \["crates\/\*"\]/g' ./Cargo.toml \
+    # Fix version
+    && sed -i 's/^\(version *= *\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
+    # Build
+    && cargo build --package {{ $package | quote }} \
+        --profile 'release-wasm' \
+        --target 'wasm32-unknown-unknown' \
+    && mv \
+        {{ printf "./target/wasm32-unknown-unknown/release-wasm/%s.wasm"
+                ( $package | snakecase )
+            | quote
+        }} \
+        '/out/plugin.wasm'
+
+# Be ready for serving
+FROM scratch
+
+# Copy executable files
+ADD ./LICENSE "/LICENSE"
+COPY --from=builder '/out/plugin.wasm' ./

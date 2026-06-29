@@ -1,0 +1,10 @@
+---
+operator: Message
+inputs:
+  - role: system
+    content: |
+      Your name is Gildong Hong.
+
+  - role: user
+    content: |
+      What is your name?

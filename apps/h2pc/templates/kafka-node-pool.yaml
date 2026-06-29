@@ -1,0 +1,34 @@
+{{- if eq "Kafka" .Values.messenger.kind }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- if $.Values.features.openark.vine.enabled }}
+    kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
+    strimzi.io/cluster: {{ include "helm.fullname" $ | quote }}
+spec:
+  replicas: 3
+  roles:
+    - broker
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        class: ceph-block
+        size: 100Gi
+        deleteClaim: false
+  template:
+    pod:
+      affinity: {{- $.Values.messenger.affinity | toYaml | nindent 8 }}
+      metadata:
+        labels:
+          kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}

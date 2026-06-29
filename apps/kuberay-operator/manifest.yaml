@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.kuberay-operator
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: kuberay-operator
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/batch/scheduling/ray
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: kuberay-operator
+    repoUrl: "https://ray-project.github.io/kuberay-helm"
+    version: 1.5.1

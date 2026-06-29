@@ -1,0 +1,36 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.spark-operator
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: spark-operator
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/observability
+    ignoreDifferences:
+      - kind: Secret
+        name: spark-operator-webhook-certs
+        jsonPointers:
+          - /data/ca-cert.pem
+          - /data/ca-key.pem
+          - /data/server-cert.pem
+          - /data/server-key.pem
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: spark-operator
+    repoUrl: "https://kubeflow.github.io/spark-operator"
+    version: 2.4.0

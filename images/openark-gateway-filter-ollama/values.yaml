@@ -1,0 +1,10 @@
+---
+debian:
+  image:
+    tag: ""
+
+rust:
+  channel: ""
+  image:
+    repo: ""
+  version: ""

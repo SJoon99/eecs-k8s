@@ -1,0 +1,41 @@
+{{- if .Values.features.nvidiaTriton.enabled }}
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
+{{- if eq .kind "NvidiaTriton" }}
+
+{{- $defaultFeatures := dict
+  "data" true
+}}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  drivers:
+{{- .drivers | default dict | toYaml | nindent 4 }}
+  externalServices:
+    nvidiaTriton:
+      image:
+{{- .image | default dict | toYaml | nindent 8 }}
+  features:
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
+  mode: NvidiaTriton
+  persistence:
+    enabled: true
+  services: {}
+  volumes:
+    home:
+      type: LocalShared
+
+    public:
+      enabled: false
+    static:
+      enabled: false
+
+{{- end }}
+{{- end }}
+{{- end }}

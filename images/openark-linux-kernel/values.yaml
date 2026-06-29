@@ -1,0 +1,11 @@
+---
+debian:
+  image:
+    repo: ""
+    tag: ""
+
+linux:
+  repo:
+    baseUrl: https://github.com
+    owner: torvalds
+    name: linux

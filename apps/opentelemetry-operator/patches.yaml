@@ -1,0 +1,18 @@
+---
+## Kubernetes cluster domain suffix
+clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+## Provide OpenTelemetry Operator manager container image and resources.
+##
+manager:
+  ## Adds additional environment variables
+  ## e.g ENV_VAR: env_value
+  # env:
+  #   ENABLE_WEBHOOKS: "true"
+
+  ## Enable ServiceMonitor for Prometheus metrics scrape
+  serviceMonitor:
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+  prometheusRule:
+    enabled: {{ has "org.ulagbulag.io/observability" .Values.features }}

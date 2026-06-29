@@ -1,0 +1,57 @@
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
+{{- if eq .kind "Desktop" }}
+
+{{- $defaultFeatures := dict
+  "audio" true
+  "containers" true
+  "dbus" true
+  "devicePassthrough" true
+  "hostAudio" true
+  "hostBluetooth" true
+  "hostDBus" true
+  "hostDisplay" true
+  "hostUdev" true
+  "ipcPassthrough" true
+  "service" true
+}}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  drivers:
+{{- .drivers | default dict | toYaml | nindent 4 }}
+  features:
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
+  mode: Desktop
+  persistence:
+    enabled: true
+  services:
+    novnc:
+      enabled: true
+    ssh:
+      enabled: false
+    x11vnc:
+      enabled: true
+  session:
+{{- .session | default dict | toYaml | nindent 4 }}
+  volumes:
+{{- if and .volumes .volumes.container }}
+    container:
+{{- .volumes.container | toYaml | nindent 6 }}
+{{- end }}
+    home:
+      type: LocalShared
+
+    public:
+      enabled: {{ $.Values.volumes.public.enabled }}
+    static:
+      enabled: {{ $.Values.volumes.static.enabled }}
+
+{{- end }}
+{{- end }}

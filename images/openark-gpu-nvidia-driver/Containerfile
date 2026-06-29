@@ -1,0 +1,143 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Parse driver info
+{{- $driverBranch := index ( .Values.driver.version | split "." ) "_0" }}
+
+# Be ready for serving
+FROM {{ printf "%s:%s-base-%s%s"
+        .Values.cuda.image.repo
+        .Values.cuda.image.version
+        .Values.kiss.os.dist
+        .Values.kiss.os.version
+    | quote
+}} AS server
+
+# Use bash shell
+SHELL ["/bin/bash", "-c"]
+
+# Package Manager Configuration
+ENV DEBIAN_FRONTEND='noninteractive'
+
+# Configure environment variables
+ENV DRIVER_BRANCH={{ $driverBranch | quote }}
+ENV DRIVER_TYPE={{ .Values.driver.type | quote }}
+ENV DRIVER_VERSION={{ .Values.driver.version | quote }}
+ENV GOLANG_VERSION={{ .Values.build.golang.version | quote }}
+
+# Configure editable environment variables
+ENV ACCEPT_LICENSE="false"
+ENV GPU_DIRECT_RDMA_ENABLED="false"
+ENV KERNEL_MODULE_DEPS={{ .Files.Get "modules-load.d/nvidia.conf" | trim | replace "\n" " " | quote }}
+ENV KERNEL_MODULE_TYPE="auto"
+ENV MAX_THREADS="2"
+ENV NVIDIA_VISIBLE_DEVICES="void"
+ENV RUN_DIR="/run/nvidia"
+ENV USE_HOST_MOFED="false"
+
+# Create an empty runtime directory
+VOLUME "${RUN_DIR}"
+
+# Install dependencies
+RUN true \
+    # Remove NVIDIA's unconditionally trusted CUDA GPG keys
+    && rm /etc/apt/sources.list.d/cuda* \
+    # Add repository: nvidia-compute-cuda
+    && apt-get update && apt-get install -y \
+        apt-utils \
+        ca-certificates \
+        curl \
+    && if [ "$(uname -m)" == 'aarch64' ]; then ARCH='arm64' \
+        ; else ARCH="$(uname -m)" \
+    ; fi \
+    && curl -sL -o '/tmp/cuda-keyring.deb' {{ printf "%s/repos/%s%s/${ARCH}/cuda-keyring_1.1-1_all.deb"
+            .Values.cuda.keyring.baseUrl
+            .Values.kiss.os.dist
+            ( .Values.kiss.os.version | replace "." "" )
+        | quote
+    }} \
+    && dpkg -i '/tmp/cuda-keyring.deb' \
+    && rm '/tmp/cuda-keyring.deb' \
+    # Enable extra architectures
+    && if [ "$(uname -m)" == 'aarch64' ]; then SUBARCH='arm64' \
+        ; elif [ "$(uname -m)" == 'x86_64' ]; then SUBARCH='i386' \
+        ; else SUBARCH="$(uname -m)" \
+    ; fi \
+    && dpkg --add-architecture "${SUBARCH}" \
+    # Install dependencies
+    && apt-get update && apt-get install -y \
+        build-essential \
+        file \
+        kmod \
+        libdw1 \
+        libelf-dev \
+        "libelf-dev:${SUBARCH}" \
+        libglvnd-dev \
+        "libglvnd-dev:${SUBARCH}" \
+        nvidia-container-toolkit \
+        pkg-config \
+        # x86_64
+{{- if ge ( $driverBranch | int ) 580 }}
+        $( \
+            if [ "$(uname -m)" == 'x86_64' ]; then echo \
+                {{ printf "libnvidia-nscq=%s-*"
+                        .Values.driver.version
+                    | quote
+                }} \
+                {{ printf "nvidia-fabricmanager=%s-*"
+                        .Values.driver.version
+                    | quote
+                }} \
+                {{ printf "nvidia-imex=%s-*"
+                        .Values.driver.version
+                    | quote
+                }} \
+            ; fi \
+        ) \
+{{- else if ge ( $driverBranch | int ) 550 }}
+        $( \
+            if [ "$(uname -m)" == 'x86_64' ]; then echo \
+                {{ printf "libnvidia-nscq-%s=%s-*"
+                        $driverBranch
+                        .Values.driver.version
+                    | quote
+                }} \
+                {{ printf "nvidia-fabricmanager-%s=%s-*"
+                        $driverBranch
+                        .Values.driver.version
+                    | quote
+                }} \
+                {{ printf "nvidia-imex-%s=%s-*"
+                        $driverBranch
+                        .Values.driver.version
+                    | quote
+                }} \
+            ; fi \
+        ) \
+{{- end }}
+    # Remove cuda repository to avoid GPG errors
+    && rm -f /etc/apt/sources.list.d/cuda* \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/* /var/log/*
+
+# Download driver installer
+WORKDIR {{ .Values.driver.installer.path | dir | quote }}
+RUN curl -sL -o {{ .Values.driver.installer.path | quote }} {{ printf "%s/%s/NVIDIA-Linux-$(uname -m)-%s.run"
+            .Values.driver.installer.baseUrl
+            .Values.driver.version
+            .Values.driver.version
+        | quote
+    }} \
+    && chmod +x {{ .Values.driver.installer.path | quote }}
+
+# Copy executable files
+ADD ./bin/entrypoint.sh ./nvidia-driver
+
+# Patch kernel module parameters
+ADD ./modprobe.d/*.conf /etc/modprobe.d/
+
+# Mark as executable
+CMD [ "./nvidia-driver" ]
+ENTRYPOINT [ "/usr/bin/env" ]

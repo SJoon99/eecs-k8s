@@ -1,0 +1,160 @@
+---
+agents:
+  llm:
+    image:
+      repo: quay.io/ulagbulag/h2pc
+      tag: ""
+      pullPolicy: Always
+    resources:
+      requests:
+        cpu: 30m
+        memory: 20Mi
+      limits:
+        cpu: 100m
+        memory: 100Mi
+
+# FIXME: Create a h2pc-operator (like session operator --[manage]> session app)
+dag:
+  - name: source-0
+    operator: Prompt
+    params:
+      name: source
+      ollama: false
+    # env: []
+    # resources: {}
+    # srcs: []
+    # sinks:
+    #   - kind: Stream # Options: [Stream]
+  - name: source-1
+    operator: Max
+    params:
+      min: 2
+      ollama: true
+    srcs:
+      - name: source-0
+        kind: Stream
+  - name: source-2
+    operator: Add
+    params:
+      min: 2
+      ollama: true
+    srcs:
+      - name: source-0
+        kind: Stream
+  - name: source-3
+    operator: Mul
+    params:
+      min: 2
+      ollama: true
+    srcs:
+      - name: source-0
+        kind: Stream
+
+env: []
+
+# extraOperators:
+#   - name: hello-world # NOTE: kebab-case, not PascalCase!
+#     template: |
+#       ---
+#       kind: LLM
+#       params:
+#         - name: modelName
+#           type: String
+#           default: exaone3.5:32b
+#         - name: name
+#           type: String
+#       features:
+#         ollama: true
+#       env:
+#         - name: OPENAI_MODEL_NAME
+#           value: {{ .params.modelName | quote }}
+#       resources: null
+#       srcs: null
+#       sinks:
+#         - kind: Stream
+#       template:
+#         - role: user
+#           template: Hello {{ .params.name }}!
+extraOperators: []
+
+# extraPrompts:
+#   - name: my-name-is-gildong-hong
+#     template:
+#       - role: system
+#         template: |
+#           Your name is Gildong Hong.
+#       - role: user
+#         template: |
+#           What is your name?
+extraPrompts: []
+
+features:
+  keda:
+    enabled: false
+
+  ollama:
+    image:
+      repo: docker.io/ollama/ollama
+      tag: 0.7.0
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        nvidia.com/gpu: "1"
+
+  openark:
+    vine:
+      enabled: false
+      clusterQueueName: openark.vine-session.openark-vine-session-pool.default-kueue
+
+messenger:
+  kind: Nats # Options: [Kafka, Nats]
+
+  affinity:
+    # Node affinity rules
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+          weight: 1
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 2
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Gateway
+          weight: 4
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+                  - Desktop
+                  - Gateway
+          - matchExpressions:
+              - key: node-role.kubernetes.io/standalone
+                operator: In
+                values:
+                  - "true"
+  kafka:
+    image:
+      repo: docker.io/apache/kafka
+      tag: 4.0.0
+      pullPolicy: Always
+  nats: {}
+
+openark:
+  labels: {}

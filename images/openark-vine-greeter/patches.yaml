@@ -1,0 +1,10 @@
+---
+debian: {{- .Values.build.ubuntu | toYaml | nindent 2 }}
+
+driver:
+  nvidia:
+    # enabled: {{ has "nvidia.com/gpu" .Values.features }}
+    version: {{ .Values.driver.nvidia.gpu.version | quote }}
+
+ingress:
+  domainName: {{ .Values.ingress.domainName | default .Values.cluster.domainName | quote }}

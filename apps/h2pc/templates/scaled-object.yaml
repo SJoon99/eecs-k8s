@@ -1,0 +1,82 @@
+{{- if .Values.features.keda }}
+{{- range $_ := .Values.dag | default list }}
+{{- $operator := include "helm.agentOperator" ( merge ( dict
+  "ExtraOperators" ( $.Values.extraOperators | default list )
+  "ExtraPrompts" ( $.Values.extraPrompts | default list )
+  "Files" $.Files
+) . ) | fromYaml }}
+{{- $kind := $operator.kind | kebabcase }}
+{{- $name := include "helm.agentName" $operator }}
+{{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
+{{- $activationLagThreshold := 1 }}
+{{- $lagThreshold := 10 }}
+{{- $srcs := ne nil $operator.srcs | ternary $operator.srcs ( .srcs | default list ) }}
+{{- if not ( empty $srcs ) }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $fullname | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    # FIXME: Create a h2pc-operator (like session operator --[manage]> session app)
+    # autoscaling.keda.sh/paused: "true"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- include "helm.agentLabels" $operator | nindent 4 }}
+    app.kubernetes.io/component: {{ $name | quote }}
+spec:
+  scaleTargetRef:
+    name: {{ $fullname | quote }}
+  pollingInterval: 30 # 30 seconds
+  initialCooldownPeriod: 0
+  cooldownPeriod: 300
+  idleReplicaCount: 0
+  minReplicaCount: {{ eq "Kafka" $.Values.messenger.kind | ternary 0 1 }}
+  maxReplicaCount: 25
+  triggers:
+{{- if eq "Kafka" $.Values.messenger.kind }}
+{{- range $_ := ( include "helm.messengerTopics" ( dict
+  "chartName" ( include "helm.fullname" $ )
+  "operator" $operator
+  "topics" $srcs
+) | split "," ) }}
+    - type: kafka
+      metadata:
+        activationLagThreshold: {{ $activationLagThreshold | quote }}
+        allowIdleConsumers: "false"
+        bootstrapServers: {{ include "helm.messengerBootstrapperServerUrl" $
+          | quote
+        }}
+        consumerGroup: {{ $fullname | quote }}
+        lagThreshold: {{ $lagThreshold | quote }}
+        offsetResetPolicy: latest # Options: [latest, earliest]
+        # sasl: none
+        tls: disable
+        topic: {{ . | quote }}
+{{- end }}
+{{- else if eq "Nats" $.Values.messenger.kind }}
+{{- range $_ := $srcs }}
+    - type: nats-jetstream
+      metadata:
+        # TODO: Use RBAC account
+        account: $G # default
+        activationLagThreshold: {{ $activationLagThreshold | quote }}
+        consumer: {{ $fullname | quote }}
+        lagThreshold: {{ $lagThreshold | quote }}
+        natsServerMonitoringEndpoint: {{ printf "%s:8222"
+            ( include "helm.messengerBootstrapperServer" $ )
+          | quote
+        }}
+        stream: {{ printf "%s-agent-%s"
+            ( include "helm.fullname" $ )
+            ( .name | default $fullname )
+          | quote
+        }}
+        useHttps: "false"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

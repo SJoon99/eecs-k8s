@@ -1,0 +1,84 @@
+[package]
+name = "openark-admission-controller"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = [
+    "tls-default",
+    "opentelemetry-all",
+    # "opentelemetry-otlp",
+]
+
+# OpenTelemetry
+opentelemetry = ["openark-admission-controller-base/opentelemetry", "tracing"]
+opentelemetry-all = [
+    "openark-admission-controller-base/opentelemetry-all",
+    "opentelemetry-logs",
+    "opentelemetry-metrics",
+    "opentelemetry-trace",
+]
+opentelemetry-otlp = [
+    "openark-admission-controller-base/opentelemetry-otlp",
+    "opentelemetry",
+]
+
+# OpenTelemetry pillars and functions
+opentelemetry-logs = [
+    "openark-admission-controller-base/opentelemetry-logs",
+    "opentelemetry",
+]
+opentelemetry-metrics = [
+    "openark-admission-controller-base/opentelemetry-metrics",
+    "opentelemetry",
+]
+opentelemetry-trace = [
+    "openark-admission-controller-base/opentelemetry-trace",
+    "opentelemetry",
+]
+
+# TLS
+tls-default = ["tls-aws-lc-rs"]
+tls-aws-lc-rs = [
+    "kube/rustls-tls",
+    "openark-admission-controller-base/tls-aws-lc-rs",
+]
+tls-openssl = [
+    "kube/openssl-tls",
+    "openark-admission-controller-base/tls-openssl",
+]
+tls-ring = ["kube/rustls-tls", "openark-admission-controller-base/tls-ring"]
+
+# Tracing
+tracing = ["openark-admission-controller-base/tracing"]
+
+[dependencies]
+openark-admission-controller-base = { workspace = true }
+openark-admission-openapi = { workspace = true, features = [
+    "kube",
+    "patch",
+    "std",
+] }
+
+anyhow = { workspace = true, features = ["std"] }
+async-trait = { workspace = true }
+clap = { workspace = true, features = ["derive", "std"] }
+kube = { workspace = true, features = ["admission"] }
+serde-json = { workspace = true, features = ["std"] }
+tokio = { workspace = true, features = ["full"] }

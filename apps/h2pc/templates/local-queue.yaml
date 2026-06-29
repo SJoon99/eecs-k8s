@@ -1,0 +1,14 @@
+{{- if .Values.features.openark.vine.enabled }}
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  clusterQueue: {{ .Values.features.openark.vine.clusterQueueName | quote }}
+{{- end }}

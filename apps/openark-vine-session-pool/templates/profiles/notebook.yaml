@@ -1,0 +1,41 @@
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
+{{- if eq .kind "Notebook" }}
+
+{{- $defaultFeatures := dict
+  "devicePassthrough" true
+  "hostUdev" true
+  "service" true
+}}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  drivers:
+{{- .drivers | default dict | toYaml | nindent 4 }}
+  externalServices:
+    notebook:
+      image:
+{{- .image | default dict | toYaml | nindent 8 }}
+  features:
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
+  mode: Notebook
+  persistence:
+    enabled: true
+  services: {}
+  volumes:
+    home:
+      type: LocalOwned
+
+    public:
+      enabled: {{ $.Values.volumes.public.enabled }}
+    static:
+      enabled: {{ $.Values.volumes.static.enabled }}
+
+{{- end }}
+{{- end }}

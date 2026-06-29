@@ -1,0 +1,16 @@
+---
+features:
+  keda:
+    enabled: {{ has "org.ulagbulag.io/autoscaling/keda" .Values.features }}
+
+  openark:
+    vine:
+      enabled: {{ and
+        ( has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features )
+        ( has "org.ulagbulag.io/desktop-environment/vine" .Values.features )
+      }}
+
+openark:
+  labels:
+    org.ulagbulag.io/bind: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+    org.ulagbulag.io/bind.profile: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}

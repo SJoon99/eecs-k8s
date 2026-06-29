@@ -1,0 +1,92 @@
+---
+apiserver:
+  enabled: false
+  baseUrl: /api/v1
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+argo:
+  destination:
+    name: "" # default: in-cluster
+    server: https://kubernetes.default.svc
+
+auth:
+  domainName: ""
+
+features:
+  gateway: false
+  gpu:
+    default: "" # Options: ["", nvidia]
+    nvidia: false
+  ingress: false
+  vm: false
+
+greeter:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-greeter
+    tag: ""
+    pullPolicy: IfNotPresent
+
+ingress:
+  domainName: ""
+
+nodeSelector: {}
+
+novnc:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-novnc
+    tag: ""
+    pullPolicy: IfNotPresent
+
+openark:
+  labels: {}
+
+operator:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  # Whether to drain unreachable nodes
+  drainUnreachableNodes: false
+
+  # Duration for signing out nodes as seconds.
+  # TODO: Use labels to detect completing signout out
+  signOutTimeoutSeconds: 90
+  tolerations: []
+
+region:
+  timezone: ""
+
+session:
+  defaultNamespace: "" # default: current namespace
+
+smartx:
+  repo:
+    baseUrl: ""
+    owner: ""
+    name: ""
+    revision: ""
+
+volumes:
+  hostPathPrefix: /mnt/openark-vine-session
+
+  public:
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 10Ti
+    storageClassName: ceph-filesystem
+
+  static:
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 10Ti
+    storageClassName: ceph-filesystem

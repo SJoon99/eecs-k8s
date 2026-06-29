@@ -1,0 +1,199 @@
+---
+clustermesh:
+  apiserver:
+    # clustermesh-apiserver Prometheus metrics configuration
+    metrics:
+      # -- Enables exporting apiserver metrics in OpenMetrics format.
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+      serviceMonitor:
+        # -- Enable service monitor.
+        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+# -- Grafana dashboards for cilium-agent
+# grafana can import dashboards based on the label and value
+# ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
+dashboards:
+  enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+# Configure Cilium Envoy options.
+envoy:
+  # -- Configure Cilium Envoy Prometheus options.
+  # Note that some of these apply to either cilium-agent or cilium-envoy.
+  prometheus:
+    # -- Enable prometheus metrics for cilium-envoy
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enable service monitors.
+      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      # Note that this setting applies to both cilium-envoy _and_ cilium-agent
+      # with Envoy enabled.
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+hubble:
+  # -- Hubble metrics configuration.
+  # See https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics
+  # for more comprehensive documentation about Hubble metrics.
+  metrics:
+{{- if has "org.ulagbulag.io/monitoring" .Values.features }}
+    enabled:
+      - dns
+      - drop
+      - flow
+      - httpV2:labelsContext=source_ip,source_namespace,source_workload,source_workload_kind,source_app,destination_ip,destination_namespace,destination_workload,destination_workload_kind,destination_app,traffic_direction
+      - icmp
+      - tcp
+{{- end }}
+
+    serviceMonitor:
+      # -- Create ServiceMonitor resources for Prometheus Operator.
+      # This requires the prometheus CRDs to be available.
+      # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    # -- Grafana dashboards for hubble
+    # grafana can import dashboards based on the label and value
+    # ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
+    dashboards:
+      enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+  peerService:
+    # -- The cluster domain to use to query the Hubble Peer service. It should
+    # be the local cluster.
+    clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+  relay:
+    # -- Node tolerations for pod assignment on nodes with taints
+    # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    tolerations:
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+        operator: Exists
+        effect: NoExecute
+
+    # -- Enable prometheus metrics for hubble-relay on the configured port at
+    # /metrics
+    prometheus:
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+      serviceMonitor:
+        # -- Enable service monitors.
+        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+  ui:
+    # -- Node tolerations for pod assignment on nodes with taints
+    # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    tolerations:
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+        operator: Exists
+        effect: NoExecute
+
+ipam:
+  operator:
+    # @schema
+    # type: [array, string]
+    # @schema
+    # -- IPv4 CIDR list range to delegate to individual nodes for IPAM.
+    clusterPoolIPv4PodCIDRList:
+      - {{ .Values.cluster.pods.ipv4.subnet | quote }}
+
+    # -- IPv4 CIDR mask size to delegate to individual nodes for IPAM.
+    clusterPoolIPv4MaskSize: {{ .Values.cluster.pods.ipv4.prefix | int }}
+
+    # @schema
+    # type: [array, string]
+    # @schema
+    # -- IPv6 CIDR list range to delegate to individual nodes for IPAM.
+    clusterPoolIPv6PodCIDRList:
+      - {{ .Values.cluster.pods.ipv6.subnet | quote }}
+
+    # -- IPv6 CIDR mask size to delegate to individual nodes for IPAM.
+    clusterPoolIPv6MaskSize: {{ .Values.cluster.pods.ipv6.prefix | int }}
+
+# -- (string) Kubernetes service host - use "auto" for automatic lookup from the cluster-info ConfigMap (kubeadm-based clusters only)
+k8sServiceHost: {{ regexReplaceAll "^https://([0-9a-z.]+):[0-9]+.*$" .Values.cluster.apiEndpoint "${1}" | quote }}
+# @schema
+# type: [string, integer]
+# @schema
+# -- (string) Kubernetes service port
+k8sServicePort: {{ regexReplaceAll "^https://[0-9a-z.]+:([0-9]+).*$" .Values.cluster.apiEndpoint "${1}" | quote }}
+
+# -- Configure the kube-proxy replacement in Cilium BPF datapath
+# Valid options are "true" or "false".
+# ref: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/
+kubeProxyReplacement: {{ not .Values.cluster.services.kubeProxy.enabled }}
+
+{{- if has "org.ulagbulag.io/acceleration/networking" .Values.features }}
+# -- Configure service load balancing
+loadBalancer:
+  # -- acceleration is the option to accelerate service handling via XDP
+  # Applicable values can be: disabled (do not use XDP), native (XDP BPF
+  # program is run directly out of the networking driver's early receive
+  # path), or best-effort (use native mode XDP acceleration on devices
+  # that support it).
+  # FIXME: XDP Acceleration is unstable
+  # acceleration: best-effort
+  acceleration: disabled
+{{- end }}
+
+operator:
+{{- if .Values.cluster.singleNode }}
+  # -- Number of replicas to run for the cilium-operator deployment
+  replicas: 1
+{{- end }}
+  # -- Enable prometheus metrics for cilium-operator on the configured port at
+  # /metrics
+  prometheus:
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enable service monitors.
+      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  # -- Grafana dashboards for cilium-operator
+  # grafana can import dashboards based on the label and value
+  # ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
+  dashboards:
+    enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+# -- Configure prometheus metrics on the configured port at /metrics
+prometheus:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  serviceMonitor:
+    # -- Enable service monitors.
+    # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    # -- Set to `true` and helm will not check for monitoring.coreos.com/v1 CRDs before deploying
+    trustCRDsExist: true
+
+# -- Configure socket LB
+socketLB:
+  # -- Disable socket lb for non-root ns. This is used to enable Istio routing rules.
+  hostNamespaceOnly: {{ has "org.ulagbulag.io/cni/istio" .Values.features }}
+
+# -- Node tolerations for agent scheduling to nodes with taints
+# ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+tolerations:
+  - operator: Exists
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+    operator: Exists
+    effect: NoExecute
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+    operator: Exists
+    effect: NoExecute
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+    operator: Exists
+    effect: NoExecute
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"

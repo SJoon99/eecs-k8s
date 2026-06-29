@@ -1,0 +1,15 @@
+---
+build:
+  golang:
+    version: {{ .Values.build.golang.version | quote }}
+
+cuda:
+  image: {{- .Values.driver.nvidia.cuda.image | toYaml | nindent 4 }}
+
+driver:
+  version: {{ .Values.driver.nvidia.gpu.version | quote }}
+
+kiss:
+  os:
+    dist: {{ .Values.kiss.os.dist | quote }}
+    version: {{ .Values.kiss.os.version | quote }}

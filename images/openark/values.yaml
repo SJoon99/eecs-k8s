@@ -1,0 +1,14 @@
+---
+debian:
+  image:
+    repo: ""
+    tag: ""
+
+kube:
+  version: ""
+
+rust:
+  channel: ""
+  image:
+    repo: ""
+  version: ""

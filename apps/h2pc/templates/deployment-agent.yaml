@@ -1,0 +1,237 @@
+{{- range $_ := .Values.dag | default list }}
+{{- $operator := include "helm.agentOperator" ( merge ( dict
+  "ExtraOperators" ( $.Values.extraOperators | default list )
+  "ExtraPrompts" ( $.Values.extraPrompts | default list )
+  "Files" $.Files
+) . ) | fromYaml }}
+{{- $kind := $operator.kind | kebabcase }}
+{{- $name := include "helm.agentName" $operator }}
+{{- $env := concat ( $.Values.env | default list ) $operator.env ( .env | default list ) }}
+{{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
+{{- $binPath := printf "/opt/%s/bin" ( include "helm.fullname" $ ) }}
+{{- $dataPath := printf "/opt/%s/data" ( include "helm.fullname" $ ) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- include "helm.agentLabels" $operator | nindent 4 }}
+    app.kubernetes.io/component: {{ $name | quote }}
+{{- if $.Values.features.openark.vine.enabled }}
+    kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
+spec:
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name | quote }}
+  template:
+    metadata:
+      annotations:
+        checksum/configmaps-agent: {{ $operator.template | toYaml | sha256sum | quote }}
+{{- if eq "Kafka" $.Values.messenger.kind }}
+        checksum/configmaps-kafka: {{ include "helm.agentBin" $ | trim | sha256sum | quote }}
+{{- end }}
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+{{- include "helm.selectorLabels" $ | nindent 8 }}
+{{- include "helm.agentLabels" $operator | nindent 8 }}
+        app.kubernetes.io/component: {{ $name | quote }}
+{{- if $.Values.features.openark.vine.enabled }}
+        kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
+    spec:
+      affinity:
+        # Node affinity rules
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+              weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+                      - Desktop
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/standalone
+                    operator: In
+                    values:
+                      - "true"
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels: {{- include "helm.selectorLabels" $ | nindent 20 }}
+                topologyKey: kubernetes.io/hostname
+              weight: 2
+          # FIXME: Use OpenARK vine session to deploy ollama (not kueue!)
+          # FIXME: Use (session matchLabels & session ollama service & _HPA agents_) to link local ollama
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels: {{- include "helm.selectorLabels" $ | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+{{- if eq "Kafka" $.Values.messenger.kind }}
+        - name: init-wait-kafka
+          image: "{{ $.Values.messenger.kafka.image.repo }}:{{ $.Values.messenger.kafka.image.tag }}"
+          imagePullPolicy: {{ $.Values.messenger.kafka.image.pullPolicy | quote }}
+          command:
+            - {{ printf "%s/wait-kafka.sh" $binPath | quote }}
+          env:
+            - name: MESSENGER_BOOTSTRAP_SERVERS
+              value: {{ include "helm.messengerBootstrapperServerUrl" $ | quote }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 200Mi
+          volumeMounts:
+            - name: bin
+              mountPath: {{ $binPath | quote }}
+{{- end }}
+{{- if $operator.features.ollama | default false }}
+        - name: ollama
+          image: "{{ $.Values.features.ollama.image.repo }}:{{ $.Values.features.ollama.image.tag }}"
+          imagePullPolicy: {{ $.Values.features.ollama.image.pullPolicy | quote }}
+          env:
+            - name: OLLAMA_FLASH_ATTENTION
+              value: "1"
+            - name: OLLAMA_HOST
+              value: 0.0.0.0:11434
+{{- range $_ := $env }}
+            - {{- . | toYaml | nindent 14 }}
+{{- end }}
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 11434
+          resources:
+{{- $.Values.features.ollama.resources | default dict | toYaml | nindent 12 }}
+          restartPolicy: Always
+          lifecycle:
+            postStart:
+              exec:
+                command: 
+                  - {{ printf "%s/pull-ollama-image.sh" $binPath | quote }}
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: bin
+              mountPath: {{ $binPath | quote }}
+            - name: data
+              mountPath: /root/.ollama
+              subPath: ollama
+{{- end }}
+      containers:
+        - name: agent
+          image: {{ printf "%s:%s"
+              ( index $.Values.agents $kind "image" "repo" )
+              ( index $.Values.agents $kind "image" "tag" | default $.Chart.AppVersion )
+            | quote
+          }}
+          imagePullPolicy: {{ index $.Values.agents $kind "image" "pullPolicy" | quote }}
+          env:
+            - name: MESSENGER_BOOTSTRAP_SERVERS
+              value: {{ include "helm.messengerBootstrapperServerUrl" $ | quote }}
+            - name: MESSENGER_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MESSENGER_GROUP_ID
+              value: {{ $fullname | quote }}
+            - name: MESSENGER_KIND
+              value: {{ $.Values.messenger.kind | kebabcase | quote }}
+{{- $srcs := ne nil $operator.srcs | ternary $operator.srcs ( .srcs | default list ) }}
+{{- if not ( empty $srcs ) }}
+            - name: MESSENGER_TOPIC_SRC
+              value: {{ include "helm.messengerTopics" ( dict
+                  "chartName" ( include "helm.fullname" $ )
+                  "operator" $operator
+                  "topics" $srcs
+                ) | quote }}
+{{- end }}
+{{- $sinks := ne nil $operator.sinks | ternary $operator.sinks ( .sinks | default list ) }}
+{{- if not ( empty $sinks ) }}
+            - name: MESSENGER_TOPIC_SINK
+              value: {{ include "helm.messengerTopics" ( dict
+                  "chartName" ( include "helm.fullname" $ )
+                  "operator" $operator
+                  "topics" $sinks
+                ) | quote }}
+{{- end }}
+            - name: PROMPT_PATH
+              value: {{ printf "%s/prompt.yaml" $dataPath | quote }}
+{{- range $_ := $env }}
+            - {{- . | toYaml | nindent 14 }}
+{{- end }}
+          resources:
+{{- if not ( empty ( .resources | default dict ) ) }}
+{{- .resources | toYaml | nindent 12 }}
+{{- else if not ( empty $operator.resources ) }}
+{{- $operator.resources | toYaml | nindent 12 }}
+{{- else }}
+{{- index $.Values.agents $kind "resources" | default dict | toYaml | nindent 12 }}
+{{- end }}
+          volumeMounts:
+            - name: agent-data
+              mountPath: {{ $dataPath | quote }}
+              readOnly: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+{{- if not $.Values.features.openark.vine.enabled }}
+      tolerations:
+        - key: {{ index $.Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+          operator: Exists
+          effect: NoExecute
+        - key: {{ index $.Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+          operator: Exists
+          effect: NoExecute
+{{- end }}
+      volumes:
+        - name: agent-data
+          configMap:
+            name: {{ $fullname | quote }}
+            defaultMode: 256 # 0o400
+{{- if eq "LLM" $operator.kind }}
+            items:
+              - key: script
+                path: prompt.yaml
+{{- end }}
+        - name: bin
+          configMap:
+            name: {{ printf "%s-agent-bin" ( include "helm.fullname" $ ) | quote }}
+            defaultMode: 365 # 0o555
+        - name: data
+          hostPath:
+            path: /opt/h2pc/data
+            type: DirectoryOrCreate
+{{- end }}

@@ -1,0 +1,34 @@
+{{- define "helm.appDestinationName" -}}
+{{- default "in-cluster" .Values.argo.destination.name }}
+{{- end }}
+
+{{- define "helm.appProjectName" -}}
+{{- if not .Values.argo.destination.name }}
+{{- include "helm.fullname" $ }}
+{{- else }}
+{{- printf "%s-%s" ( include "helm.fullname" $ ) ( include "helm.appDestinationName" $ ) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ include "helm.appProjectName" $ | quote }}
+  namespace: argo
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  description: OpenARK VINE Session Operator
+  destinations:
+    - name: {{ include "helm.appDestinationName" $ | quote }}
+      namespace: {{ .Release.Namespace | quote }}
+      server: {{ .Values.argo.destination.server | quote }}
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  sourceNamespaces:
+    - {{ .Release.Namespace | quote }}
+  sourceRepos:
+    - '*'

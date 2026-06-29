@@ -1,0 +1,30 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.kueue
+spec:
+  enabled: false
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: kueue-system
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/batch/scheduling/kueue
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: kueue
+    repoUrl: "registry.k8s.io/kueue/charts"
+    version: 0.16.0

@@ -1,0 +1,86 @@
+{
+  "name": "All files",
+  "path": "/",
+  "files": [
+    {
+      "name": "My Project",
+      "path": "/My Project/",
+      "size": 12,
+      "owner": {
+        "id": "42",
+        "name": "Anonymous",
+        "initial": "A"
+      }
+    },
+    {
+      "name": "My Audio.mp3",
+      "path": "/My Audio.mp3",
+      "source": "https://file-examples.com/index.php/sample-audio-files/sample-mp3-download/",
+      "size": 733645,
+      "created": {
+        "at": "2026-01-15T22:59:22Z"
+      },
+      "modified": {
+        "at": "2026-01-15T22:59:22Z"
+      },
+      "owner": {
+        "id": "42",
+        "name": "Anonymous",
+        "initial": "A"
+      },
+      "ty": "audio/mpeg"
+    },
+    {
+      "name": "My Image.jpg",
+      "path": "/My Image.jpg",
+      "size": 165378,
+      "created": {
+        "at": "2026-01-12T15:56:50Z"
+      },
+      "modified": {
+        "at": "2026-01-12T15:56:50Z"
+      },
+      "owner": {
+        "id": "42",
+        "name": "Anonymous",
+        "initial": "A"
+      },
+      "ty": "image/jpeg"
+    },
+    {
+      "name": "My Document.pdf",
+      "path": "/My Document.pdf",
+      "size": 18810,
+      "created": {
+        "at": "2026-01-12T15:56:50Z"
+      },
+      "modified": {
+        "at": "2026-01-12T15:56:50Z"
+      },
+      "owner": {
+        "id": "24",
+        "name": "Darth Vader",
+        "initial": "DV"
+      },
+      "ty": "application/pdf"
+    },
+    {
+      "name": "My Video.mp4",
+      "path": "/My Video.mp4",
+      "source": "file-examples.com/index.php/sample-video-files/sample-mp4-files/",
+      "size": 3114374,
+      "created": {
+        "at": "2026-01-15T23:15:12Z"
+      },
+      "modified": {
+        "at": "2026-01-15T23:15:12Z"
+      },
+      "owner": {
+        "id": "24",
+        "name": "Darth Vader",
+        "initial": "DV"
+      },
+      "ty": "video/mp4"
+    }
+  ]
+}

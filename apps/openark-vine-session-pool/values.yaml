@@ -1,0 +1,72 @@
+---
+defaultProfileName: default-kueue # Replace to empty "" for disabling
+
+features:
+  kueue:
+    enabled: false
+    namespaceSelector: {}
+  nvidiaTriton:
+    enabled: false
+  ollama:
+    enabled: false
+
+profiles:
+  - kind: Desktop
+    name: ubuntu-24.04
+    session:
+      context:
+        hostNetwork: true
+        privileged: true # FIXME: how to use webcams WITHOUT privileged containers?
+
+  - kind: Kueue
+    name: default-kueue
+    extraFlavors: []
+
+  - kind: Notebook
+    name: pytorch
+    # image:
+    #   repo: nvcr.io/nvidia/pytorch
+    #   tag: 25.03-py3
+
+  - kind: NvidiaTriton
+    name: nvidia-triton
+    # image:
+    #   repo: nvcr.io/nvidia/tritonserver
+    #   tag: 25.04-vllm-python-py3
+
+  - kind: Ollama
+    name: ollama
+    # image:
+    #   repo: docker.io/ollama/ollama
+    #   tag: 0.6.6
+
+  - kind: VirtualMachine
+    name: windows-11
+    cdrom:
+      filename: Win11_24H2_Korean_x64.iso
+    windows:
+      eula: false
+
+extraProfiles: []
+
+bindings:
+  []
+  # - profileName: pytorch
+  #   priority: 0 # Default: 0
+  #   nodeSelector: {}
+  #   user:
+  #     kind: Guest # Options: [Guest, User]
+  #     name: ""
+  #   schedule:
+  #     - timezone: Asia/Seoul
+  #       start: "0 9 * * *" # 09:00
+  #       end: "0 18 * * *" # 18:00
+
+openark:
+  labels: {}
+
+volumes:
+  public:
+    enabled: true
+  static:
+    enabled: true

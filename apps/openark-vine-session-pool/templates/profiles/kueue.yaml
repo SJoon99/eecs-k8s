@@ -1,0 +1,36 @@
+{{- if .Values.features.kueue.enabled }}
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
+{{- if eq .kind "Kueue" -}}
+
+{{- $defaultFeatures := dict
+}}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  drivers:
+{{- .drivers | default dict | toYaml | nindent 4 }}
+  features:
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
+  mode: Manual
+  persistence:
+    enabled: true
+  services: {}
+  volumes:
+    home:
+      type: LocalShared
+
+    public:
+      enabled: {{ $.Values.volumes.public.enabled }}
+    static:
+      enabled: {{ $.Values.volumes.static.enabled }}
+
+{{- end }}
+{{- end }}
+{{- end }}

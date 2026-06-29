@@ -1,0 +1,8 @@
+---
+debian:
+  image:
+    repo: ""
+    tag: ""
+
+kube:
+  version: ""

@@ -1,0 +1,9 @@
+---
+debian:
+  image:
+    tag: ""
+
+python:
+  image:
+    repo: ""
+  version: ""

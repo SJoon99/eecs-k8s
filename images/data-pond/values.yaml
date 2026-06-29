@@ -1,0 +1,17 @@
+---
+csi:
+  baseUrl: https://raw.githubusercontent.com
+  owner: container-storage-interface
+  name: spec
+  revision: master
+
+debian:
+  image:
+    repo: ""
+    tag: ""
+
+rust:
+  channel: ""
+  image:
+    repo: ""
+  version: ""

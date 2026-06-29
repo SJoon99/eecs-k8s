@@ -1,0 +1,15 @@
+---
+debian:
+  image:
+    tag: ""
+
+nginx:
+  image:
+    repo: ""
+    tag: ""
+    otel: false
+
+ruby:
+  image:
+    repo: ""
+  version: ""

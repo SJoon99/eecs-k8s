@@ -1,0 +1,25 @@
+---
+debian:
+  image:
+    tag: ""
+
+nginx:
+  image:
+    repo: ""
+    tag: ""
+    otel: false
+
+node:
+  version: ""
+
+nvm:
+  version: ""
+
+openark:
+  labels: {}
+
+rust:
+  channel: ""
+  image:
+    repo: ""
+  version: ""

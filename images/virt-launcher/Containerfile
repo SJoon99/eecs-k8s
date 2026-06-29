@@ -1,0 +1,62 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for building
+FROM --platform=linux/amd64 "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS builder-edk2
+
+# Install dependencies
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        bison \
+        build-essential \
+        flex \
+        git \
+        iasl \
+        nasm \
+        python-is-python3 \
+        python3-pip \
+        uuid-dev \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/* /var/log/*
+
+# Download source code
+WORKDIR /src
+RUN git clone --depth=1 \
+        -b {{ .Values.edk2.repo.revision | quote }} \
+        "{{ .Values.edk2.repo.baseUrl }}/{{ .Values.edk2.repo.owner }}/{{ .Values.edk2.repo.name }}.git" \
+    && cd {{ .Values.edk2.repo.name | quote }} \
+    && git submodule update --init --depth=1
+
+# Build edk2
+SHELL ["/bin/bash", "-c"]
+WORKDIR {{ printf "/src/%s" .Values.edk2.repo.name | quote }}
+{{ include "container.run.cached.amd64" ( dict
+        "id" $.Release.Name
+        "key" "edk2"
+        "target" ( printf "/src/%s/Build" .Values.edk2.repo.name )
+    ) }} \
+    # Build
+    make -C 'BaseTools' \
+    && source edksetup.sh \
+    && export EDK_TOOLS_PATH="$(pwd)/BaseTools" \
+    # Build (x86_64)
+    && build -a X64 -p OvmfPkg/OvmfPkgX64.dsc -t GCC5 -b RELEASE \
+        -D SECURE_BOOT_ENABLE=TRUE \
+        -D TPM_ENABLE=TRUE \
+    && pushd './Build/OvmfX64/RELEASE_GCC5/FV' \
+    && cp 'OVMF_CODE.fd' 'OVMF_CODE.secboot.fd' \
+    && cp 'OVMF_VARS.fd' 'OVMF_VARS.secboot.fd' \
+    && mkdir /out \
+    && cp -r ./. /out/ \
+    && popd \
+    # Cleanup
+    && true
+
+# Be ready for serving
+FROM "{{ .Values.virtLauncher.image.repo }}:{{ .Values.virtLauncher.image.tag | default .Release.Version }}" AS server
+
+# Replace edk2
+COPY --chmod=444 --from=builder-edk2 \
+    "/out/*.fd" \
+    "/usr/share/edk2/ovmf/"

@@ -1,0 +1,954 @@
+---
+apiserver:
+  baseUrl: ""
+
+assets:
+  image:
+    pullPolicy: Always
+
+dnsmasq:
+  image:
+    repo: quay.io/poseidon/dnsmasq
+    tag: v0.5.0
+
+features:
+  dev: false
+
+greeter:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-greeter
+    tag: ""
+
+ipmitool:
+  image:
+    repo: quay.io/ulagbulag/openark-kiss-ipmitool
+    tag: ""
+
+ipxe:
+  image:
+    repo: quay.io/ulagbulag/openark-kiss-ipxe
+    tag: ""
+
+ntpd:
+  image:
+    repo: docker.io/dockurr/chrony
+    tag: 4.6.1
+  servers:
+    - 0.pool.ntp.org
+    - 1.pool.ntp.org
+    - 2.pool.ntp.org
+    - 3.pool.ntp.org
+
+operator:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+workflow:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+wsmancli:
+  image:
+    repo: quay.io/ulagbulag/openark-kiss-wsmancli
+    tag: ""
+
+packages:
+  ubuntu:
+    requires:
+      - apt
+      - apt-transport-https
+      - base-files
+      - base-passwd
+      - bash
+      - bash-completion
+      - bc
+      - bind9-dnsutils
+      - bolt
+      - bpfcc-tools
+      - bpftrace
+      - btrfs-progs
+      - build-essential
+      - bzip2
+      - cloud-guest-utils
+      - cloud-initramfs-copymods
+      - cloud-initramfs-dyn-netconf
+      - conntrack
+      - console-setup-linux
+      - coreutils
+      - cpio
+      - curl
+      - dash
+      - diffutils
+      - distro-info
+      - dmidecode
+      - dosfstools
+      - e2fsprogs
+      - ebtables
+      - ed
+      - efibootmgr
+      - eject
+      - ethtool
+      - findutils
+      - fonts-ubuntu-console
+      - friendly-recovery
+      - fwupd
+      - fwupd-signed
+      - grep
+      - gzip
+      - haveged
+      - hdparm
+      - hostname
+      - htop
+      - inetutils-telnet
+      - info
+      - init
+      - iproute2
+      - iptables
+      - iputils-ping
+      - iputils-tracepath
+      - ipvsadm
+      - iw
+      - libdrm-common
+      - libdrm2
+      - libseccomp2
+      - libusb-1.0-0
+      - login
+      - logrotate
+      - lshw
+      - lsof
+      - lvm2
+      - man-db
+      - manpages
+      - mdadm
+      - media-types
+      - nano
+      - network-manager
+      - nftables
+      - ntfs-3g
+      - numactl
+      - openssh-server
+      - openssh-sftp-server
+      - openssl
+      - overlayroot
+      - parted
+      - patch
+      - pciutils
+      - pollinate
+      - psmisc
+      - python3-apt
+      - qemu-user-static
+      - rsync
+      - socat
+      - software-properties-common
+      - strace
+      - sudo
+      - sysstat
+      - tar
+      - telnet
+      - trace-cmd
+      - tuned
+      - udisks2
+      - uidmap
+      - unzip
+      - util-linux
+      - uuid-runtime
+      - wget
+      - wireless-tools
+      - wpasupplicant
+      - xfsprogs
+    excludes:
+      - adwaita-icon-theme
+      - alsa-base
+      - alsa-utils
+      - anacron
+      - apport
+      - apt-config-icons-hidpi
+      - aptdaemon
+      - aspell
+      - avahi-daemon
+      - baobab
+      - bcache-tools
+      - bluez
+      - bluez-cups
+      - bluez-obexd
+      - branding-ubuntu
+      - bubblewrap
+      - byobu
+      - cheese-common
+      - cloud-init
+      - cloud-initramfs-copymods
+      - cloud-initramfs-dyn-netconf
+      - colord
+      - colord-data
+      - command-not-found
+      - cron
+      - cuda-cccl-*
+      - cuda-command-line-tools-*
+      - cuda-culibos-dev-*
+      - cuda-cuobjdump-*
+      - cuda-cupti-*
+      - cuda-cuxxfilt-*
+      - cron-daemon-common
+      - cuda-documentation-*
+      - cuda-driver-dev-*
+      - cuda-gdb-*
+      - cuda-nsight-compute-*
+      - cuda-nsight-systems-*
+      - cuda-nvdisasm-*
+      - cuda-nvml-dev-*
+      - cuda-nvprune-*
+      - cuda-nvrtc-*
+      - cuda-nvtx-*
+      - cuda-profiler-api-*
+      - cuda-sanitizer-*
+      - cuda-toolkit-*
+      - cups
+      - cups-*
+      - dc
+      - dconf-cli
+      - deja-dup
+      - desktop-file-utils
+      - dgx-oobe-desktop
+      - dgx-release
+      - dgx-repo
+      - dgx-spark-mlnx-hotplug
+      - dgxstation-grub
+      - dictionaries-common
+      - dmraid
+      - dmz-cursor-theme
+      - dnsmasq
+      - docbook-xml
+      - docker
+      - docker-buildx-plugin
+      - docker-compose-plugin
+      - duplicity
+      - eatmydata
+      - emacsen-common
+      - endeavour-common
+      - espeak-ng-data
+      - evince-common
+      - evolution-data-server-common
+      - file
+      - file-roller
+      - fontconfig
+      - fonts-*
+      - ftp
+      - gamemode
+      - gamemode-daemon
+      - gds-tools-*
+      - gedit-common
+      - geoclue-2.0
+      - geocode-glib-common
+      - gir1.2-*
+      - ghostscript
+      - glib-networking
+      - glib-networking-common
+      - glib-networking-services
+      - gnome-*
+      - gparted-common
+      - grilo-plugins-0.3-base
+      - gsettings-ubuntu-schemas
+      - gstreamer1.0-*
+      - gtk-update-icon-cache
+      - guile-3.0-libs
+      - gvfs-*
+      - heif-gdk-pixbuf
+      - heif-thumbnailer
+      - hicolor-icon-theme
+      - hpc-sdk-repo
+      - hplip
+      - hplip-data
+      - humanity-icon-theme
+      - hunspell-*
+      - hyphen-*
+      - ibus
+      - ibus-gtk
+      - ibus-gtk3
+      - iio-sensor-proxy
+      - ipcalc
+      - java-common
+      - jfsutils
+      - kexec-tools
+      - kitty
+      - kitty-shell-integration
+      - kitty-terminfo
+      - kpartx
+      - kpartx-boot
+      - landscape-common
+      - language-pack-*
+      - language-selector-common
+      - language-selector-gnome
+      - libatk-adaptor
+      - libglib2.0-bin
+      - libnotify-bin
+      - libnvidia-container-tools
+      - libnvidia-container1
+      - libreoffice-calc
+      - libreoffice-gnome
+      - libreoffice-impress
+      - libreoffice-math
+      - libreoffice-writer
+      - localechooser-data
+      - lp-solve
+      - lxd-agent-loader
+      - lxd-installer
+      - m17n-db
+      - makedumpfile
+      - media-player-info
+      - mobile-broadband-provider-info
+      - modemmanager
+      - motd-news-config
+      - mousetweaks
+      - mozc-data
+      - mscompress
+      - msecli
+      - mtr-tiny
+      - multipath-tools
+      - mutter-common
+      - mythes-*
+      - nautilus-data
+      - nautilus-sendto
+      - needrestart
+      - netcat-openbsd
+      - network-manager-openvpn
+      - nfs-common
+      - nsight-compute-*
+      - nsight-systems-*
+      - nv-cpu-governor
+      - nv-docker-gpus
+      - nv-env-paths
+      - nv-grubserial
+      - nv-iommu
+      - nv-ipmi-devintf
+      - nv-limits
+      - nv-no-grubmenu
+      - nv-persistence-mode
+      - nv-update-disable
+      - nv-vulkan-desktop-ppa
+      - nv-xorg-simpledrm
+      - nvgpu-services-list
+      - nvidia-compute-utils-*
+      - nvidia-conf-xconfig
+      - nvidia-console-settings
+      - nvidia-container-toolkit
+      - nvidia-container-toolkit-base
+      - nvidia-desktop-default-remove-gnome-software-deb
+      - nvidia-dgx-telemetry
+      - nvidia-disable-bt-profiles
+      - nvidia-disable-init-on-alloc
+      - nvidia-disable-numa-balancing
+      - nvidia-drm-options-modeset0
+      - nvidia-earlycon
+      - nvidia-enable-bt-profiles
+      - nvidia-enable-power-meter-cap
+      - nvidia-firmware-*
+      - nvidia-kernel-common-*
+      - nvidia-kernel-defaults
+      - nvidia-kernel-source-*
+      - nvidia-modprobe
+      - nvidia-motd
+      - nvidia-nvme-options
+      - nvidia-pci-realloc
+      - nvidia-raid-config
+      - nvidia-redfish-config
+      - nvidia-relaxed-ordering-gpu
+      - nvidia-relaxed-ordering-nvme
+      - nvidia-spark-baud-rate
+      - nvidia-spark-default-remove-nvidia-fs-pkg
+      - nvidia-spark-fstab-config
+      - nvidia-spark-grub-pci
+      - nvidia-spark-initcall-bl
+      - nvidia-spark-realtek-mod-options
+      - nvidia-spark-run-apt-upgrade
+      - nvidia-update-manager
+      - nvidia-utils-*
+      - nvme-cli
+      - open-iscsi
+      - open-vm-tools
+      - openjdk-8-jre-headless
+      - openprinting-ppds
+      - openvpn
+      - orca
+      - p11-kit
+      - p11-kit-modules
+      - pastebinit
+      - pipewire
+      - pipewire-alsa
+      - pipewire-bin
+      - pipewire-pulse
+      - pkg-config
+      - pkgconf
+      - pkgconf-bin
+      - plymouth
+      - policykit-desktop-privileges
+      - pollinate
+      - poppler-data
+      - poppler-utils
+      - printer-driver-*
+      - psmisc
+      - python-babel-localedata
+      - python3-aptdaemon
+      - python3-attr
+      - python3-automat
+      - python3-babel
+      - python3-bcrypt
+      - python3-boto3
+      - python3-botocore
+      - python3-brlapi
+      - python3-cairo
+      - python3-click
+      - python3-colorama
+      - python3-commandnotfound
+      - python3-configobj
+      - python3-constantly
+      - python3-cups
+      - python3-cupshelpers
+      - python3-dateutil
+      - python3-debconf
+      - python3-debian
+      - python3-defer
+      - python3-distro-info
+      - python3-distupgrade
+      - python3-dnspython
+      - python3-fasteners
+      - python3-freetype
+      - python3-gdbm
+      - python3-gi-cairo
+      - python3-hamcrest
+      - python3-hyperlink
+      - python3-ibus-1.0
+      - python3-incremental
+      - python3-jinja2
+      - python3-jmespath
+      - python3-json-pointer
+      - python3-jsonpatch
+      - python3-jsonschema
+      - python3-ldb
+      - python3-louis
+      - python3-magic
+      - python3-mako
+      - python3-markdown
+      - python3-markupsafe
+      - python3-monotonic
+      - python3-nacl
+      - python3-netifaces
+      - python3-newt
+      - python3-olefile
+      - python3-packaging
+      - python3-paramiko
+      - python3-pexpect
+      - python3-pil
+      - python3-psutil
+      - python3-ptyprocess
+      - python3-pyasn1
+      - python3-pyasn1-modules
+      - python3-pyrsistent
+      - python3-reportlab
+      - python3-rlpycairo
+      - python3-s3transfer
+      - python3-samba
+      - python3-serial
+      - python3-service-identity
+      - python3-software-properties
+      - python3-speechd
+      - python3-systemd
+      - python3-talloc
+      - python3-tdb
+      - python3-twisted
+      - python3-tz
+      - python3-update-manager
+      - python3-xdg
+      - python3-xkit
+      - python3-zope.interface
+      - qemu-user-static
+      - reiserfsprogs
+      - remmina
+      - remmina-common
+      - rhythmbox
+      - rhythmbox-data
+      - rpcbind
+      - rsyslog
+      - rtkit
+      - run-one
+      - rygel
+      - samba
+      - samba-common
+      - samba-common-bin
+      - samba-libs
+      - sane-utils
+      - screen
+      - seahorse
+      - sg3-utils
+      - sg3-utils-udev
+      - sgml-data
+      - shotwell
+      - shotwell-common
+      - simple-scan
+      - snapd
+      - sosreport
+      - sound-icons
+      - sound-theme-freedesktop
+      - speech-dispatcher
+      - speech-dispatcher-audio-plugins
+      - spice-vdagent
+      - squashfs-tools
+      - srptools
+      - ssl-cert
+      - switcheroo-control
+      - system-config-printer-udev
+      - tcl
+      - tcl8.6
+      - tcpdump
+      - tdb-tools
+      - thermald
+      - time
+      - tmux
+      - tnftp
+      - totem
+      - totem-common
+      - tpm2-tools
+      - transmission-common
+      - transmission-gtk
+      - ufw
+      - ubuntu-docs
+      - ubuntu-drivers-common
+      - ubuntu-minimal
+      - ubuntu-mono
+      - ubuntu-pro-client
+      - ubuntu-release-upgrader-core
+      - ubuntu-report
+      - ubuntu-server-minimal
+      - ubuntu-settings
+      - ubuntu-wallpapers
+      - ubuntu-wallpapers-noble
+      - ucx-utils
+      - unattended-upgrades
+      - unminimize
+      - uno-libs-private
+      - update-inetd
+      - update-manager-core
+      - upower
+      - ure
+      - ure-java
+      - usb-modeswitch
+      - usb-modeswitch-data
+      - usbmuxd
+      - usbutils
+      - user-session-migration
+      - wamerican
+      - wbrazilian
+      - wbritish
+      - webp-pixbuf-loader
+      - wfrench
+      - whoopsie-preferences
+      - wireplumber
+      - witalian
+      - wngerman
+      - wogerman
+      - wportuguese
+      - wspanish
+      - wswiss
+      - x11-apps
+      - x11-session-utils
+      - x11-utils
+      - x11-xserver-utils
+      - xbitmaps
+      - xbrlapi
+      - xcursor-themes
+      - xdg-dbus-proxy
+      - xdg-desktop-portal
+      - xdg-desktop-portal-gnome
+      - xdg-user-dirs
+      - xdg-user-dirs-gtk
+      - xdg-utils
+      - xinit
+      - xinput
+      - xorg
+      - xorg-docs-core
+      - xserver-xorg-video-nvidia-*
+      - xul-ext-ubufox
+      - xwayland
+      - yaru-theme-*
+      - yelp
+      - yelp-xsl
+      - zenity
+      - zenity-common
+      - zerofree
+
+kubespray:
+  ##########################################
+  # adduser
+  ##########################################
+
+  # additional configurations
+  kube_owner: root
+  kube_cert_group: root
+
+  ##########################################
+  # container-engine / containerd
+  ##########################################
+
+  # Containerd conf default dir
+  containerd_storage_dir: "/var/lib/containerd"
+
+  containerd_base_runtime_spec_rlimit_nofile: 1048576
+
+  containerd_enable_selinux: false
+  containerd_disable_apparmor: true
+
+  ##########################################
+  # etcd
+  ##########################################
+
+  # Settings for containerized control plane (etcd/kubelet/secrets)
+  # deployment type for legacy etcd mode
+  etcd_deployment_type: "{{ 'docker' if container_manager == 'docker' else 'host' }}" # data is stored in /opt/etcd
+
+  # Directory where etcd data stored
+  etcd_data_dir: /opt/etcd
+  etcd_config_dir: /etc/etcd
+  etcd_events_data_dir: /var/lib/etcd-events
+
+  ##########################################
+  # kubernetes / client
+  ##########################################
+
+  # Kubernetes configuration dirs and system namespace.
+  # Those are where all the additional config stuff goes
+  # the kubernetes normally puts in /srv/kubernetes.
+  # This puts them in a sane location and namespace.
+  # Editing those values will almost surely break something.
+  kube_config_dir: /etc/kubernetes
+
+  ##########################################
+  # kubernetes / control-plane
+  ##########################################
+
+  ## kube-controller-manager
+  kube_controller_manager_bind_address: 127.0.0.1
+
+  # enable kubernetes audit
+  kubernetes_audit: true
+
+  # configure arp_ignore and arp_announce to avoid answering ARP queries from kube-ipvs0 interface
+  # must be set to true for MetalLB to work
+  kube_proxy_strict_arp: false # set to true for MetalLB to work
+
+  kube_controller_terminated_pod_gc_threshold: 50
+  kube_apiserver_request_timeout: 120s
+
+  # 1.10+ admission plugins
+  kube_apiserver_enable_admission_plugins:
+    # - AlwaysPullImages
+    - EventRateLimit
+    - LimitRanger
+    - MutatingAdmissionWebhook
+    - NamespaceLifecycle
+    - NodeRestriction
+    - PodNodeSelector
+    # - PodSecurity
+    - ResourceQuota
+    - ServiceAccount
+    - ValidatingAdmissionWebhook
+
+  # enable admission plugins configuration
+  kube_apiserver_admission_control_config_file: true
+
+  # data structure to configure EventRateLimit admission plugin
+  # this should have the following structure:
+  # kube_apiserver_admission_event_rate_limits:
+  # <limit_name>:
+  #   type: <limit_type>
+  #   qps: <qps_value>
+  #   burst: <burst_value>
+  #   cache_size: <cache_size_value>
+  kube_apiserver_admission_event_rate_limits:
+    limit_1:
+      type: Namespace
+      qps: 50
+      burst: 100
+      cache_size: 2000
+    limit_2:
+      type: User
+      qps: 50
+      burst: 100
+
+  # create a default Pod Security Configuration and deny running of insecure pods
+  # kube_system namespace is exempted by default
+  kube_pod_security_use_default: false
+  kube_pod_security_default_enforce: restricted
+
+  # extra runtime config
+  kube_api_runtime_config:
+    - resource.k8s.io/v1beta1=true
+
+  ## Enable/Disable Kube API Server Authentication Methods
+  kube_token_auth: false
+  # kube_oidc_auth: false
+
+  ## Variables for OpenID Connect Configuration https://kubernetes.io/docs/admin/authentication/
+  ## To use OpenID you have to deploy additional an OpenID Provider (e.g Dex, Keycloak, ...)
+  # kube_oidc_url: https:// ...
+  kube_oidc_client_id: kubernetes
+  ## Optional settings for OIDC
+  kube_oidc_username_claim: preferred_username
+  kube_oidc_username_prefix: "oidc:"
+  kube_oidc_groups_claim: groups
+  kube_oidc_groups_prefix: "oidc:"
+  # Copy oidc CA file to the following path if needed
+  # kube_oidc_ca_file: {{ kube_cert_dir }}/ca.pem
+  # Optionally include a base64-encoded oidc CA cert
+  # kube_oidc_ca_cert: c3RhY2thYnVzZS5jb20...
+
+  ## Encrypting Secret Data at Rest
+  kube_encrypt_secret_data: true
+
+  ## Support tls min version, Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
+  tls_min_version: VersionTLS12
+
+  ## Support tls cipher suites.
+  tls_cipher_suites:
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+
+  ## kube-scheduler
+  kube_scheduler_bind_address: 127.0.0.1
+
+  ##########################################
+  # k8s-cluster / kubelet
+  ##########################################
+
+  ### fail with swap on (default true)
+  kubelet_fail_swap_on: true
+
+  ## Kube Proxy mode One of ['iptables','ipvs']
+  kube_proxy_mode: ipvs
+
+  # krew root dir
+  krew_root_dir: /usr/local/krew
+
+  # nginx-proxy configure
+  nginx_config_dir: /etc/nginx
+
+  # Enable nodelocal dns cache
+  enable_nodelocaldns: false
+
+  # Can be host_resolvconf, docker_dns or none
+  resolvconf_mode: "none"
+
+  # Enable k8s_external plugin for CoreDNS
+  enable_coredns_k8s_external: false
+  # Enable endpoint_pod_names option for kubernetes plugin
+  enable_coredns_k8s_endpoint_pod_names: false
+
+  # Choose network plugin (cilium, calico, kube-ovn, weave or flannel. Use cni for generic cni plugin)
+  # Can also be set to 'cloud', which lets the cloud provider setup appropriate routing
+  kube_network_plugin: cni # Bootstrap: custom_cni (Cilium)
+
+  # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
+  kube_network_plugin_multus: false
+
+  # Kubernetes internal network for services, unused block of space.
+  kube_service_addresses: 10.64.0.0/12 # same as CNI CIDR
+
+  # Configure Dual Stack networking (i.e. both IPv4 and IPv6)
+  enable_dual_stack_networks: false # disable IPv6
+
+  # Profiling
+  kube_profiling: false
+
+  # Kubernetes dashboard
+  # RBAC required. see docs/getting-started.md for access details.
+  dashboard_enabled: false
+
+  # Helm deployment
+  helm_enabled: true
+
+  # Local volume provisioner deployment
+  local_volume_provisioner_enabled: false
+  # local_volume_provisioner_storage_classes:
+  #   local-storage:
+  #     host_dir: /mnt/disks
+  #     mount_dir: /mnt/disks
+  #     volume_mode: Filesystem
+  #     fs_type: ext4
+  #   fast-disks:
+  #     host_dir: /mnt/fast-disks
+  #     mount_dir: /mnt/fast-disks
+  #     block_cleaner_command:
+  #       - "/scripts/shred.sh"
+  #       - "2"
+  #     volume_mode: Filesystem
+  #     fs_type: ext4
+
+  # Cert manager deployment
+  cert_manager_enabled: true
+  cert_manager_namespace: cert-manager
+
+  ## List of authorization modes that must be configured for
+  ## the k8s cluster. Only 'AlwaysAllow', 'AlwaysDeny', 'Node' and
+  ## 'RBAC' modes are tested. Order is important.
+  authorization_modes:
+    - Node
+    - RBAC
+
+  # When enabled, API bearer tokens (including service account tokens) can be used to authenticate to the kubelet's HTTPS endpoint
+  kubelet_authentication_token_webhook: true
+
+  # When enabled, access to the kubelet API requires authorization by delegation to the API server
+  kubelet_authorization_mode_webhook: true
+
+  # kubelet uses certificates for authenticating to the Kubernetes API
+  # Automatically generate a new key and request a new certificate from the Kubernetes API as the current certificate approaches expiration
+  kubelet_rotate_certificates: true
+  # kubelet can also request a new server certificate from the Kubernetes API
+  kubelet_rotate_server_certificates: true
+
+  # If set to true, kubelet errors if any of kernel tunables is different than kubelet defaults
+  kubelet_protect_kernel_defaults: true
+
+  # Set additional sysctl variables to modify Linux kernel variables, for example:
+  additional_sysctl:
+    # Configure aio
+    - name: fs.aio-max-nr
+      value: 262144
+
+    # Adjust notify
+    - name: fs.inotify.max_queued_events
+      value: 2099999999
+    - name: fs.inotify.max_user_instances
+      value: 2099999999
+    - name: fs.inotify.max_user_watches
+      value: 2099999999
+
+    # Configure BPF
+    - name: net.core.bpf_jit_limit
+      value: 528482304
+
+    # Activate zero-copy
+    - name: net.core.optmem_max
+      value: 1048576
+
+    # Adjust buffer size
+    - name: net.core.rmem_max
+      value: 2147483647
+    - name: net.core.wmem_max
+      value: 2147483647
+
+    # Activate jumbo frames
+    - name: net.ipv4.tcp_mtu_probing
+      value: 1
+
+    # Adjust TCP buffer size
+    - name: net.ipv4.tcp_rmem
+      value: 4096 131072 1073741824
+    - name: net.ipv4.tcp_wmem
+      value: 4096 16384 1073741824
+
+    # Adjust pages
+    - name: vm.nr_hugepages
+      value: 0
+
+  # Sets the eventRecordQPS parameter in kubelet-config.yaml.
+  # Setting it to 0 allows unlimited requests per second.
+  kubelet_event_record_qps: 1
+
+  # sysctl_file_path to add sysctl conf to
+  sysctl_file_path: /etc/sysctl.d/99-sysctl.conf
+
+  ##########################################
+  # k8s-cluster / kubelet / advanced
+  ##########################################
+
+  kubelet_streaming_connection_idle_timeout: 5m
+  kubelet_make_iptables_util_chains: true
+  kubelet_seccomp_default: true
+
+  ##########################################
+  # kubernetes / node
+  ##########################################
+
+  # In case you have multiple interfaces in your
+  # control plane nodes and you want to specify the right
+  # IP addresses, kubelet_secure_addresses allows you
+  # to specify the IP from which the kubelet
+  # will receive the packets.
+  # kubelet_secure_addresses: 192.168.10.110 192.168.10.111 192.168.10.112
+
+  # Reserve this space for kube resources
+  # Whether to run kubelet and container-engine daemons in a dedicated cgroup. (Not required for resource reservations).
+  kube_cpu_reserved: 1000m
+  kube_memory_reserved: 2Gi # heuristic minimal peak: 1Gi for ContainerD, 1Gi for kubelet
+  kube_ephemeral_storage_reserved: 2Gi
+  kube_pid_reserved: "2000" # heuristic minimal peak: 1000
+
+  # Set to true to reserve resources for system daemons
+  system_cpu_reserved: 1000m
+  system_memory_reserved: 5Gi # heuristic minimal peak: 3Gi for ETCD, 2Gi for the others
+  system_memory_reserved_workers: 2Gi # heuristic minimal peak: 2Gi for the others
+  system_ephemeral_storage_reserved: 2Gi
+  system_pid_reserved: "4000" # heuristic minimal peak: 3000
+
+  # The maximum number of image pulls in parallel. Set it to a integer great than 1 to enable image pulling in parallel.
+  kubelet_max_parallel_image_pulls: 5
+
+  ##########################################
+  # kubernetes / preinstall
+  ##########################################
+
+  nameservers: "{{ upstream_dns_servers }}"
+
+  # An alternative flexvolume plugin directory
+  kubelet_flexvolumes_plugins_dir: /var/lib/kubelet/volumeplugins
+
+  systemd_resolved_disable_stub_listener: true
+
+  ##########################################
+  # kubernetes-apps / ansible
+  ##########################################
+
+  # Limits for coredns
+  coredns_affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchLabels:
+              k8s-app: kube-dns{{ coredns_ordinal_suffix }}
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+
+  ##########################################
+  # kubernetes-apps / kubelet-csr-approver
+  ##########################################
+
+  # kubelet-csr-approver
+  # See upstream https://github.com/postfinance/kubelet-csr-approver
+  kubelet_csr_approver_enabled: false
+
+  ##########################################
+  # upgrade / pre-upgrade
+  ##########################################
+
+  # TODO: Change the key name
+  drain_nodes: false
+  drain_pod_selector: serviceType!=ansible-task
+  upgrade_node_fail_if_drain_fails: false
+
+  ##########################################
+  # (others)
+  ##########################################
+
+  ipv4_stack: true
+  ipv6_stack: false

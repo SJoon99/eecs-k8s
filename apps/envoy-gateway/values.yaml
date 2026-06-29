@@ -1,0 +1,72 @@
+---
+deployment:
+  pod:
+    affinity:
+      # Node affinity rules
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+            weight: 1
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Gateway
+            weight: 2
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+                    - ControlPlane
+                    - Gateway
+
+config:
+  envoyGateway:
+    gateway:
+      controllerName: gateway.envoyproxy.io/gatewayclass-controller
+    provider:
+      type: Kubernetes
+    logging:
+      level:
+        default: info
+    extensionApis:
+      enableEnvoyPatchPolicy: true
+
+certgen:
+  job:
+    affinity:
+      # Node affinity rules
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+            weight: 1
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Gateway
+            weight: 2
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+                    - ControlPlane
+                    - Gateway

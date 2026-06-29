@@ -1,0 +1,81 @@
+# Build
+/container-image/
+
+# Containerfile
+/*.containerfile
+/*.dockerfile
+/.containerignore
+/.dockerignore
+/Containerfile
+/Dockerfile
+
+# Dev
+/**/.env
+/**/.token
+/**/*.crt
+/**/*.key
+/**/*.pem
+/**/dist/
+/api/
+/tests/
+
+# Editor
+/**/.DS_Store
+/.idea/
+
+# GitOps
+/**/.git
+/**/.gitconfig
+/**/.gitignore
+/**/.gitkeep
+/**/.svn
+
+# GitOps
+/clusters/
+/manifest.yaml
+
+# Helm
+/Chart.yaml
+/patches.yaml
+/templates/
+/values.yaml
+
+# Jekyll
+/**/_site/
+/**/.sass-cache/
+/**/.jekyll-cache/
+/**/.jekyll-metadata
+/**/Gemfile.lock
+/**/vendor
+
+# JS
+/**/node_modules/
+/**/output.css
+/**/package-lock.json
+
+# Poetry
+/**/.venv
+/**/poetry.lock
+/src/*/_metadata/version.py
+
+# Python
+/**/__pycache__/
+
+# Rust
+/**/Cargo.lock
+/**/debug/
+/**/target/
+
+# Temporary files
+/**/.build/
+/**/.buildlog/
+/**/.env*
+/**/.swiftpm/
+/**/*.bak
+/**/*.class
+/**/*.log
+/**/*.pem
+/**/*.pyc
+/**/*.swp
+/**/*.tmp
+/**/*.token

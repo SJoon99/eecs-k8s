@@ -1,0 +1,237 @@
+---
+ananicy:
+  enabled: false
+  image:
+    repo: ""
+    tag: ""
+    pullPolicy: ""
+
+auth:
+  domainName: ""
+
+dnsConfig:
+  nameservers:
+    - 1.1.1.1
+    - 1.0.0.1
+dnsPolicy: None
+
+drivers:
+  nvidiaGpu:
+    eula: true
+    repository: quay.io/ulagbulag
+    manager:
+      image: openark-gpu-nvidia-driver-manager
+      pullPolicy: Always
+      repository: quay.io/ulagbulag
+      version: ""
+    image: openark-gpu-nvidia-driver
+    version: 535.261.03
+
+externalServices:
+  notebook:
+    image:
+      repo: nvcr.io/nvidia/pytorch
+      tag: 25.03-py3
+      pullPolicy: IfNotPresent
+  nvidiaTriton:
+    image:
+      repo: nvcr.io/nvidia/tritonserver
+      tag: 25.04-vllm-python-py3
+      pullPolicy: IfNotPresent
+  ollama:
+    image:
+      repo: docker.io/ollama/ollama
+      tag: 0.7.0
+      pullPolicy: IfNotPresent
+
+extraServices:
+  []
+  # - name: rdp-tcp
+  #   protocol: TCP
+  #   containerPort: 3389
+  # - name: rdp-udp
+  #   protocol: UDP
+  #   containerPort: 3389
+
+features:
+  audio: false
+  containers: false
+  data: false
+  dbus: false
+  devicePassthrough: false
+  gateway: false
+  hostAudio: false
+  hostBluetooth: false
+  hostDBus: false
+  hostDisplay: false
+  hostUdev: false
+  ingress: false
+  ipcPassthrough: false
+  service: false
+  vm: false
+
+fullnameOverride: ""
+
+greeter:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-greeter
+    tag: ""
+    pullPolicy: IfNotPresent
+
+ingress:
+  domainName: ""
+
+mode: Manual # Options: [Desktop, Manual, Notebook]
+
+nameOverride: ""
+
+node:
+  name: ""
+
+openark:
+  labels: {}
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: ceph-block
+
+region:
+  timezone: ""
+
+services:
+  novnc:
+    enabled: false
+    image:
+      repo: quay.io/ulagbulag/openark-vine-novnc
+      tag: ""
+      pullPolicy: IfNotPresent
+  rdp:
+    enabled: false
+  ssh:
+    enabled: false
+  x11vnc:
+    enabled: false
+    image:
+      repo: quay.io/ulagbulag/openark-vine-x11vnc
+      tag: ""
+      pullPolicy: IfNotPresent
+
+session:
+  context:
+    uid: 2000
+    gid: 2000
+    hostIPC: false
+    hostNetwork: false
+    hostPID: false
+    privileged: false
+    root: false
+    sudo: true
+  image:
+    repo: quay.io/ulagbulag/openark-vine-session
+    tag: ubuntu-24.04-20250703
+    pullPolicy: IfNotPresent
+
+  compositor:
+    x11: picom
+    options:
+      vsync: true
+  locale:
+    global: ko_KR.UTF-8
+    lang: en_US.UTF-8
+    lc:
+      all: ko_KR.UTF-8
+  template:
+    backgroundImageUrl: https://github.com/ulagbulag/openark-desktop-template/blob/master/.local/share/backgrounds/images/gist-ai.jpeg?raw=true
+    fontsUrl: ""
+    git: https://github.com/ulagbulag/openark-desktop-template.git
+    gitBranch: master
+    iconsUrl: ""
+    themesUrl: ""
+
+  command: []
+  args: []
+  env:
+    - name: GTK_IM_MODULE
+      value: nimf
+    - name: NO_AT_BRIDGE
+      value: "1"
+    - name: OLLAMA_FLASH_ATTENTION
+      value: "1"
+    - name: QT_IM_MODULE
+      value: nimf
+    - name: QT4_IM_MODULE
+      value: nimf
+    - name: XMODIFIERS
+      value: "@im=nimf"
+  priorityClassName: system-node-critical
+  # TODO(user): Configure it!
+  qos: Burstable # Options: [Burstable, Guaranteed]
+  resources: {}
+  #   limits:
+  #     cpu: "12"
+  #     memory: 32Gi
+  #     nvidia.com/gpu: "1"
+  #     nvidia.com/GA104_GEFORCE_RTX_3070_LITE_HASH_RATE: "1"
+
+user:
+  kind: Guest # Options: [Guest, User]
+  name: ""
+  privileged: false
+  role: "" # Options: [Ops, Viewer]
+  shell: zsh
+
+vm:
+  enabled: false
+  os: windows-11 # Options: windows-11
+  windows:
+    eula: false
+    source:
+      # TODO(user): Configure it!
+      url: ""
+    virtioContainerDisk:
+      image:
+        repo: quay.io/kubevirt/virtio-container-disk
+        tag: v1.5.0-rc.1
+        pullPolicy: IfNotPresent
+
+  hostDevices: []
+  #   - apiGroup: org.ulagbulag.io/pci
+  #     kind: UsbController
+  #     vendor: 10de
+  #     product: "2488"
+  #   - apiGroup: org.ulagbulag.io/usb
+  #     kind: Keyboard
+  #     vendor: 413c
+  #     product: "2107"
+
+volumes:
+  hostPathPrefix: /mnt/openark-vine-session
+  container:
+    root: false # mount /var/lib/containers
+  home:
+    type: Temporary # Options: LocalOwned, LocalShared, RemoteOwned, Temporary
+  vm:
+    type: LocalShared # Options: LocalShared, RemoteOwned
+
+  public:
+    enabled: false
+    persistentVolumeClaim:
+      claimName: ""
+  static:
+    enabled: false
+    persistentVolumeClaim:
+      claimName: ""
+
+  hook:
+    capacity:
+      storage: 2Gi
+
+  # TODO(user): Configure it!
+  local:
+    capacity: {}
+    #   storage: 200Gi

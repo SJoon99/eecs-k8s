@@ -1,0 +1,34 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.h2pc
+spec:
+  enabled: false # Alpha phase
+  group: ops
+  phase: alpha
+  scale: large
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: h2pc
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/batch/h2pc
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+{{- if and
+  ( has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features )
+  ( has "org.ulagbulag.io/desktop-environment/vine" .Values.features )
+}}
+      managedNamespaceMetadata:
+        labels:
+          {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
+{{- end }}
+      respectIgnoreDifferences: true
+      serverSideApply: true

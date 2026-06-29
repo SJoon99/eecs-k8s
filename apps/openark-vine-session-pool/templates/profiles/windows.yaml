@@ -1,0 +1,51 @@
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
+{{- if eq .kind "VirtualMachine" }}
+
+{{- $defaultFeatures := dict
+  "audio" true
+  "devicePassthrough" true
+  "hostAudio" true
+  "hostDisplay" true
+  "hostUdev" true
+  "service" true
+}}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  features:
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
+  mode: Desktop
+  persistence:
+    enabled: true
+  services:
+    rdp:
+      enabled: true
+    ssh:
+      enabled: false
+  vm:
+    enabled: true
+    os: {{ .name | quote }}
+    windows:
+      eula: {{ .windows.eula }}
+      source:
+        url: "https://api.minio.{{ $.Values.tower.domainName }}/openark-vine-session/vm/cdrom/{{ .cdrom.filename }}"
+  volumes:
+    home:
+      type: LocalShared
+    vm:
+      type: LocalShared
+
+    public:
+      enabled: false
+    static:
+      enabled: false
+
+{{- end }}
+{{- end }}

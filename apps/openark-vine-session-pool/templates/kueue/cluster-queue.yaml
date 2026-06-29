@@ -1,0 +1,53 @@
+{{- if .Values.features.kueue.enabled }}
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
+{{- if eq .kind "Kueue" -}}
+
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: {{ printf "%s.%s" ( include "helm.kueueClusterNamePrefix" $ ) .name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  flavorFungibility:
+    whenCanBorrow: MayStopSearch
+    whenCanPreempt: TryNextFlavor
+  namespaceSelector:
+{{- $.Values.features.kueue.namespaceSelector | toYaml | nindent 4 }}
+  preemption:
+    borrowWithinCohort:
+      policy: Never
+    reclaimWithinCohort: Never
+    withinClusterQueue: Never
+  queueingStrategy: BestEffortFIFO
+  resourceGroups:
+    - coveredResources:
+        - cpu
+        - ephemeral-storage
+        - memory
+        - nvidia.com/gpu
+      flavors:
+        # default flavor
+        - name: {{ printf "%s.%s" ( include "helm.kueueClusterNamePrefix" $ ) .name | quote }}
+          resources:
+            - name: cpu
+              nominalQuota: 1000000 # infinity quotas
+            - name: ephemeral-storage
+              nominalQuota: 1000000Ti # infinity quotas
+            - name: memory
+              nominalQuota: 1000000Gi # infinity quotas
+            - name: nvidia.com/gpu
+              nominalQuota: 1000000 # infinity quotas
+        # extra flavors
+{{- range $_ := .extraFlavors | default list }}
+        -
+{{- . | toYaml | nindent 10 }}
+{{- end }}
+  stopPolicy: None
+
+{{- end }}
+{{- end }}
+{{- end }}
