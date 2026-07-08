@@ -18,8 +18,11 @@ cephClusterSpec:
 {{- end }}
 
 ingress:
-  # -- Enable an ingress for the ceph-dashboard
+  # -- Enable an ingress for the ceph-dashboard only when the cluster explicitly
+  # enables the ingress feature. Storage-only child clusters do not have an
+  # ingress controller yet.
   dashboard:
+    enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}
     annotations:
       cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
       nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
