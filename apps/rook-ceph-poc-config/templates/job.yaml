@@ -88,6 +88,9 @@ spec:
 
               ceph osd pool set .mgr size 1 --yes-i-really-mean-it
               ceph osd pool set .mgr min_size 1
+{{- with .Values.cephPocConfig.monClockDriftAllowed }}
+              ceph config set mon mon_clock_drift_allowed {{ . | quote }}
+{{- end }}
 {{- if .Values.cephPocConfig.muteNoReplicaWarnings }}
               ceph config set global mon_warn_on_pool_no_redundancy false || true
 {{- end }}

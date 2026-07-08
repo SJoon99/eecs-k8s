@@ -11,6 +11,9 @@ configOverride: |
   osd_pool_default_size = 1
   osd_pool_default_min_size = 1
 
+  [mon]
+  mon_clock_drift_allowed = 0.1
+
 cephClusterSpec:
   mon:
     # Set the number of mons to be started. Generally recommended to be 3.
