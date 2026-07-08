@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiss-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/component: pxe-edge
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+data:
+  bootstrapper_network_dns_server_ns1: {{ .Values.network.nameservers.ns1 | quote }}
+  bootstrapper_network_dns_server_ns2: {{ .Values.network.nameservers.ns2 | quote }}
+  network_interface_mtu_size: {{ .Values.network.interface.mtu | toString | quote }}
+  network_ipv4_dhcp_duration: {{ .Values.network.ipv4.dhcp.duration | quote }}
+  network_ipv4_dhcp_gateway: {{ .Values.network.ipv4.dhcp.gateway | default .Values.network.ipv4.gateway | quote }}
+  network_ipv4_dhcp_range_begin: {{ .Values.network.ipv4.dhcp.range.begin | quote }}
+  network_ipv4_dhcp_range_end: {{ .Values.network.ipv4.dhcp.range.end | quote }}
+  network_nameserver_incluster_ipv4: {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 | quote }}
+  os_dist: {{ .Values.kiss.os.dist | quote }}

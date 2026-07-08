@@ -14,7 +14,12 @@ set os_rev {{ printf ( eq .Values.kiss.os.channel "release" | ternary ".%s" "-%s
 set os_channel {{ .Values.kiss.os.channel }}
 
 # FIXME: the official cdimage repo does NOT match the versions between initrd and iso
-set assets http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}
+set assets {{ .Values.assets.baseUrl | default ( printf "http://assets.%s.svc.%s" .Release.Namespace ( include "helm.clusterDomainName" $ ) ) }}
+{{- if .Values.network.ipv4.dhcp.gateway }}
+# Lab fallback: force the kernel/initramfs route through the PXE gateway.
+set gateway {{ .Values.network.ipv4.dhcp.gateway }}
+set dns {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
+{{- end }}
 set repo http://cdimage.ubuntu.com/releases/${os_ver}/${os_channel}
 iseq ${arch} amd64 && set repo ${assets}/assets/ubuntu-${os_ver} ||
 

@@ -409,6 +409,12 @@ network:
       range:
         begin: 10.32.0.0
         end: 10.32.255.254
+      # Optional DHCP default gateway for PXE/iPXE clients.
+      # Defaults to network.ipv4.gateway when unset.
+      gateway: ""
+      # Optionally advertise Kubernetes service CIDRs through the seed node.
+      serviceRoutes:
+        enabled: false
     gateway: 10.47.255.254
     subnet: 10.32.0.0/12
 

@@ -303,11 +303,12 @@ Create applications
 # Features: {{ $.Manifest.RemainingFeatures | join ", " }}
 {{- else }}
 {{- $_ := set $.Manifest "UseClusterValues" $.Manifest.Raw.spec.app.useClusterValues | default false }}
-{{- $_ := set $.Manifest "AppCluster" $clusterName }}
+{{- $_ := set $.Manifest "Destination" ( $.Manifest.Raw.spec.app.destination | default dict ) }}
+{{- $_ := set $.Manifest "AppCluster" ( $.Manifest.Destination.name | default $clusterName ) }}
 {{- $_ := set $.Manifest "AppName" ( printf "%s-%s" $clusterName $.Manifest.Name ) }}
 {{- $_ := set $.Manifest "AppNamespace" "argo" }}
 {{- $_ := set $.Manifest "AppOfApps" false }}
-{{- $_ := set $.Manifest "AppProject" $projectName }}
+{{- $_ := set $.Manifest "AppProject" ( $.Manifest.Destination.project | default $projectName ) }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "AutoPrune" ( $.Manifest.Raw.spec.app.autoPrune | default false ) }}
 {{- $_ := set $.Manifest "AutoSync" ( $.Manifest.Raw.spec.app.autoSync | ne false ) }}

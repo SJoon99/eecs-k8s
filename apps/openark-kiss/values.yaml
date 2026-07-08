@@ -1,12 +1,26 @@
 ---
 apiserver:
   baseUrl: ""
+  # Optional external URL for PXE-installed nodes to notify this backend.
+  # Leave empty to use the OpenARK default in-cluster Service DNS name.
+  externalBaseUrl: ""
+  service:
+    nodePort: null
 
 assets:
+  # Optional external URL for PXE clients. Leave empty to use the in-cluster
+  # Service DNS name. Lab/parent clusters can set this to a NodePort URL.
+  baseUrl: ""
+  service:
+    type: LoadBalancer
+    nodePort: null
   image:
     pullPolicy: Always
 
 dnsmasq:
+  # Keep default OpenARK/KISS behavior active; site profiles can set this to 0
+  # and only enable it during a provisioning window.
+  replicas: 1
   image:
     repo: quay.io/poseidon/dnsmasq
     tag: v0.5.0
@@ -578,6 +592,37 @@ packages:
       - zenity
       - zenity-common
       - zerofree
+
+cilium:
+  bootstrap:
+    enabled: false
+    version: 1.18.5
+    timeoutSeconds: 600
+
+karmada:
+  enabled: false
+  version: v1.18.1
+  kubeconfig:
+    secret:
+      namespace: karmada-system
+      name: karmada-kubeconfig
+      key: kubeconfig
+  member:
+    adminConfPath: /etc/kubernetes/admin.conf
+    insecureSkipTlsVerify: false
+  join:
+    clusterNamespace: karmada-cluster
+    timeoutSeconds: 300
+    labels: {}
+
+flux:
+  bootstrap:
+    enabled: false
+    version: v2.4.0
+    namespace: flux-system
+    installHubCrds: true
+    installMemberControllers: true
+    timeoutSeconds: 300
 
 kubespray:
   ##########################################

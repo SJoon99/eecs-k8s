@@ -1,0 +1,28 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openark-kiss-pxe-edge
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - SJP <SJoon99>
+  app:
+    autoSync: true
+    namespace: {{ .Values.pxeEdge.namespace | default "tower-pxe-edge" | quote }}
+    patched: true
+    unsafe: false
+    useClusterValues: true
+    destination:
+      name: {{ .Values.pxeEdge.destination.name | default "node4-host" | quote }}
+      project: {{ printf "%s-%s" .Values.tower.cluster .Values.tower.group | quote }}
+    features:
+      - org.ulagbulag.io/bare-metal-provisioning/kiss
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
