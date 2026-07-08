@@ -11,6 +11,11 @@ smartx:
     namespace: {{ .Values.twin.namespace | quote }}
 
 controller:
+{{- if ((.Values.argoWorkflows | default dict).vclusterSafeScheduling | default false) }}
+  # The Tower POC runs these controllers inside a vCluster whose node labels/taints
+  # do not exactly match the physical SmartX cluster scheduling profile.
+  affinity: {}
+{{- end }}
   metricsConfig:
     # -- Enables prometheus metrics server
     enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
@@ -44,6 +49,10 @@ controller:
       effect: NoExecute
 
 server:
+{{- if ((.Values.argoWorkflows | default dict).vclusterSafeScheduling | default false) }}
+  # See controller.affinity above.
+  affinity: {}
+{{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
