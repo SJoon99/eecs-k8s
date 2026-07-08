@@ -6,8 +6,8 @@ metadata:
   name: rook-ceph-poc-config
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+    argocd.argoproj.io/sync-wave: "10"
   labels:
     app.kubernetes.io/name: {{ .Chart.Name | quote }}
     app.kubernetes.io/instance: {{ .Release.Name | quote }}
@@ -15,7 +15,6 @@ metadata:
 spec:
   activeDeadlineSeconds: {{ .Values.cephPocConfig.activeDeadlineSeconds | int }}
   backoffLimit: {{ .Values.cephPocConfig.backoffLimit | int }}
-  ttlSecondsAfterFinished: 300
   template:
     metadata:
       labels:
