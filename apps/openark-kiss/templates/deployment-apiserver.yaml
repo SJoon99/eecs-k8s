@@ -49,7 +49,10 @@ spec:
                     operator: In
                     values:
                       - ControlPlane
-      priorityClassName: k8s-cluster-critical
+{{- $priorityClassName := (hasKey .Values.kiss "priorityClassName" | ternary .Values.kiss.priorityClassName "k8s-cluster-critical") }}
+{{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName | quote }}
+{{- end }}
       securityContext:
         seccompProfile:
           type: RuntimeDefault

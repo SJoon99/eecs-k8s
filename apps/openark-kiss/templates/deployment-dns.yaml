@@ -26,6 +26,10 @@ spec:
 {{- include "helm.labels" $ | nindent 8 }}
         app.kubernetes.io/component: dns
     spec:
+{{- with .Values.kiss.tolerations }}
+      tolerations:
+{{ toYaml . | nindent 8 }}
+{{- end }}
       affinity:
         nodeAffinity:
           # KISS normal control plane nodes should be preferred

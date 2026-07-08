@@ -50,7 +50,10 @@ spec:
       nodeSelector:
         # control plane nodes should get ready for DHCP
         node-role.kubernetes.io/control-plane: ""
-      priorityClassName: k8s-cluster-critical
+{{- $priorityClassName := (hasKey .Values.kiss "priorityClassName" | ternary .Values.kiss.priorityClassName "k8s-cluster-critical") }}
+{{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName | quote }}
+{{- end }}
       securityContext:
         seccompProfile:
           type: RuntimeDefault

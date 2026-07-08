@@ -118,7 +118,10 @@ spec:
           - {{ .Values.network.nameservers.ns1 | quote }}
           - {{ .Values.network.nameservers.ns2 | quote }}
       dnsPolicy: ClusterFirst
-      priorityClassName: k8s-cluster-critical
+{{- $priorityClassName := (hasKey .Values.kiss "priorityClassName" | ternary .Values.kiss.priorityClassName "k8s-cluster-critical") }}
+{{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName | quote }}
+{{- end }}
       securityContext:
         seccompProfile:
           type: RuntimeDefault

@@ -383,7 +383,10 @@ spec:
           - {{ .Values.network.nameservers.ns2 | quote }}
       dnsPolicy: ClusterFirst
       hostNetwork: true
-      priorityClassName: system-cluster-critical
+{{- $workflowPriorityClassName := (hasKey .Values.kiss "workflowPriorityClassName" | ternary .Values.kiss.workflowPriorityClassName "system-cluster-critical") }}
+{{- if $workflowPriorityClassName }}
+      priorityClassName: {{ $workflowPriorityClassName | quote }}
+{{- end }}
       restartPolicy: OnFailure
       tolerations:
         - effect: NoExecute

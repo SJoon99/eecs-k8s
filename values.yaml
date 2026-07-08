@@ -344,6 +344,12 @@ kiss:
     forceResetOS: false
     resetStorage: false
 
+  # KISS control-plane pod priority classes.
+  # Site presets can set these to an empty string when the target Kubernetes
+  # cluster does not define these PriorityClasses, such as the Tower vCluster POC.
+  priorityClassName: k8s-cluster-critical
+  workflowPriorityClassName: system-cluster-critical
+
   # OS Configuration
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
