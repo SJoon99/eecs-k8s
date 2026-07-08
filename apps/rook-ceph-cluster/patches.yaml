@@ -1,5 +1,6 @@
 ---
-{{- $useReplicas := not ( .Values.cluster.singleNode | default false ) }}
+{{- $rookCeph := .Values.rookCeph | default dict }}
+{{- $useReplicas := ternary $rookCeph.useReplicas ( not ( .Values.cluster.singleNode | default false ) ) ( hasKey $rookCeph "useReplicas" ) }}
 
 # All values below are taken from the CephCluster CRD
 # More information can be found at [Ceph Cluster CRD](/Documentation/CRDs/ceph-cluster-crd.md)
