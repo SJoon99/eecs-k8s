@@ -13,7 +13,7 @@ spec:
   app:
     autoSync: true
     namespace: argo
-    patched: false
+    patched: true
     unsafe: true # Argo CD
     useClusterValues: false
     features:
