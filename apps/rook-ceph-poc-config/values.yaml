@@ -1,0 +1,12 @@
+---
+cephPocConfig:
+  image: quay.io/ceph/ceph:v19.2.1
+  activeDeadlineSeconds: 1800
+  backoffLimit: 20
+  muteNoReplicaWarnings: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi

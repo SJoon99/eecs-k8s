@@ -5,6 +5,12 @@
 # All values below are taken from the CephCluster CRD
 # More information can be found at [Ceph Cluster CRD](/Documentation/CRDs/ceph-cluster-crd.md)
 {{- if not $useReplicas }}
+configOverride: |
+  [global]
+  mon_allow_pool_delete = true
+  osd_pool_default_size = 1
+  osd_pool_default_min_size = 1
+
 cephClusterSpec:
   mon:
     # Set the number of mons to be started. Generally recommended to be 3.
