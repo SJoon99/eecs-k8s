@@ -349,6 +349,18 @@ kiss:
   # cluster does not define these PriorityClasses, such as the Tower vCluster POC.
   priorityClassName: k8s-cluster-critical
   workflowPriorityClassName: system-cluster-critical
+  priorityClasses:
+    # Disabled by default because most physical SmartX clusters define these
+    # cluster-level scheduling resources outside this app. Site presets such as
+    # the Tower vCluster POC can enable this when KISS-generated Jobs require a
+    # compatibility PriorityClass that the cluster does not provide.
+    create: false
+    items:
+      - name: k8s-cluster-critical
+        value: 1000000000
+        globalDefault: false
+        description: Compatibility PriorityClass for OpenARK KISS Jobs.
+        preemptionPolicy: PreemptLowerPriority
 
   # OS Configuration
   os:

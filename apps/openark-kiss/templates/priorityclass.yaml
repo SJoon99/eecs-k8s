@@ -1,0 +1,19 @@
+{{- $kiss := .Values.kiss | default dict }}
+{{- $priorityClasses := get $kiss "priorityClasses" | default dict }}
+{{- if (get $priorityClasses "create" | default false) }}
+{{- range $class := (get $priorityClasses "items" | default list) }}
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ get $class "name" | required "kiss.priorityClasses.items[].name is required" | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+value: {{ get $class "value" | default 1000000000 | int }}
+globalDefault: {{ get $class "globalDefault" | default false }}
+description: {{ get $class "description" | default "OpenARK KISS compatibility PriorityClass." | quote }}
+{{- with (get $class "preemptionPolicy") }}
+preemptionPolicy: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
