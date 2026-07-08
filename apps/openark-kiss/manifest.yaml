@@ -18,7 +18,16 @@ spec:
     useClusterValues: true # Global
     features:
       - org.ulagbulag.io/bare-metal-provisioning/kiss
-    ignoreDifferences: []
+    ignoreDifferences:
+      # The private provisioning SSH key is injected as runtime secret material.
+      # Git carries only the public key; do not force the live private key back to
+      # the empty chart value during sync.
+      - group: ""
+        kind: Secret
+        name: kiss-config
+        namespace: kiss
+        jsonPointers:
+          - /data/auth_ssh_key_id_ed25519
     sync:
       createNamespace: true
       respectIgnoreDifferences: true
