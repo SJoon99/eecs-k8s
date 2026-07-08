@@ -4,6 +4,9 @@ smartx:
     name: {{ .Values.cluster.name | quote }}
   group:
     name: {{ .Values.group.name | quote }}
+  legacyServiceAccountTokenSecrets:
+    {{- $legacySATokenSecretConfig := ((.Values.argoWorkflows | default dict).legacyServiceAccountTokenSecrets | default dict) }}
+    enabled: {{ hasKey $legacySATokenSecretConfig "enabled" | ternary $legacySATokenSecretConfig.enabled true }}
   twin:
     namespace: {{ .Values.twin.namespace | quote }}
 
