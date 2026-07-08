@@ -374,11 +374,13 @@ kiss:
   power:
     # Bare-metal Box Intel AMT Configuration
     intelAmt:
+      enabled: true
       username: ""
       password: ""
 
     # Bare-metal Box IPMI Configuration
     ipmi:
+      enabled: true
       username: ""
       password: ""
 

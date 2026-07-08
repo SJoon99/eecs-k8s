@@ -1,8 +1,21 @@
 ---
+{{- $intelAmt := .Values.kiss.power.intelAmt | default dict }}
+{{- $intelAmtEnabled := true }}
+{{- if hasKey $intelAmt "enabled" }}
+{{- $intelAmtEnabled = $intelAmt.enabled }}
+{{- end }}
 - name: Check whether Intel AMT exists
+  when: {{ $intelAmtEnabled }}
   stat:
     path: /dev/mei0
   register: intel_amt
+
+- name: Disable Intel AMT power plane
+  when: {{ not $intelAmtEnabled }}
+  set_fact:
+    intel_amt:
+      stat:
+        exists: false
 
 - name: Check whether Intel AMT is ready
   set_fact:
