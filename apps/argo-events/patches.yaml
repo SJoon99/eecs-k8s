@@ -4,7 +4,7 @@ controller:
 {{- if ((.Values.argoEvents | default dict).vclusterSafeScheduling | default false) }}
   # The Tower POC runs Argo Events inside a vCluster whose node labels/taints
   # do not exactly match the physical SmartX cluster scheduling profile.
-  affinity: {}
+  affinity: null
 {{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
@@ -30,7 +30,7 @@ controller:
 webhook:
 {{- if ((.Values.argoEvents | default dict).vclusterSafeScheduling | default false) }}
   # See controller.affinity above.
-  affinity: {}
+  affinity: null
 {{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
