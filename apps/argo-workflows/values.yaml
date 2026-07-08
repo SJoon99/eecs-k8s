@@ -72,26 +72,6 @@ controller:
   workflowNamespaces:
     - argo
 
-  # -- Assign custom [affinity] rules
-  affinity:
-    nodeAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Compute
-          weight: 1
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Compute
-                  - ControlPlane
-
   # -- Configure Argo Server to show custom [links]
   ## Ref: https://argo-workflows.readthedocs.io/en/stable/links/
   # links: []
@@ -100,26 +80,6 @@ controller:
   # columns: []
 
 server:
-  # -- Assign custom [affinity] rules
-  affinity:
-    nodeAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Compute
-          weight: 1
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Compute
-                  - ControlPlane
-
   # -- Run the argo server in "secure" mode. Configure this value instead of `--secure` in extraArgs.
   ## See the following documentation for more details on secure mode:
   ## https://argo-workflows.readthedocs.io/en/stable/tls/

@@ -48,26 +48,6 @@ extraObjects:
 
 ## Argo Events controller
 controller:
-  # -- Assign custom [affinity] rules to the deployment
-  affinity:
-    nodeAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Compute
-          weight: 1
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Compute
-                  - ControlPlane
-
   ## Events controller metrics configuration
   metrics:
     serviceMonitor:
@@ -78,13 +58,3 @@ controller:
 webhook:
   # -- Enable admission webhook. Applies only for cluster-wide installation
   enabled: true
-  # -- Assign custom [affinity] rules to the deployment
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - ControlPlane
