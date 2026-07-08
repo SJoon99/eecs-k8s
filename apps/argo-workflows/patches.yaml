@@ -14,7 +14,16 @@ controller:
 {{- if ((.Values.argoWorkflows | default dict).vclusterSafeScheduling | default false) }}
   # The Tower POC runs these controllers inside a vCluster whose node labels/taints
   # do not exactly match the physical SmartX cluster scheduling profile.
-  affinity: null
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution: []
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
 {{- end }}
   metricsConfig:
     # -- Enables prometheus metrics server
@@ -51,7 +60,16 @@ controller:
 server:
 {{- if ((.Values.argoWorkflows | default dict).vclusterSafeScheduling | default false) }}
   # See controller.affinity above.
-  affinity: null
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution: []
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
 {{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
