@@ -39,6 +39,10 @@ ingress:
     # Note: Only one of ingress class annotation or the `ingressClassName:` can be used at a time
     # to set the ingress class
     ingressClassName: {{ .Values.ingress.domainName | quote }}
+{{- else }}
+ingress:
+  dashboard:
+    host: null
 {{- end }}
 monitoring:
   # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
