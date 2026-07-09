@@ -1,6 +1,40 @@
 ---
+{{- $argoEvents := .Values.argoEvents | default dict }}
 ## Argo Events controller
 controller:
+{{- if ($argoEvents.vclusterSafeScheduling | default false) }}
+  # The Tower POC runs Argo Events inside a vCluster whose node labels/taints
+  # do not exactly match the physical SmartX cluster scheduling profile.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
+{{- else }}
+  # -- Assign custom [affinity] rules to the deployment
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+{{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
@@ -23,6 +57,29 @@ controller:
 
 ## Argo Events admission webhook
 webhook:
+{{- if ($argoEvents.vclusterSafeScheduling | default false) }}
+  # See controller.affinity above.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
+{{- else }}
+  # -- Assign custom [affinity] rules to the deployment
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+{{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}

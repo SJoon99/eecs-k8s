@@ -344,6 +344,24 @@ kiss:
     forceResetOS: false
     resetStorage: false
 
+  # KISS control-plane pod priority classes.
+  # Site presets can set these to an empty string when the target Kubernetes
+  # cluster does not define these PriorityClasses, such as the Tower vCluster POC.
+  priorityClassName: k8s-cluster-critical
+  workflowPriorityClassName: system-cluster-critical
+  priorityClasses:
+    # Disabled by default because most physical SmartX clusters define these
+    # cluster-level scheduling resources outside this app. Site presets such as
+    # the Tower vCluster POC can enable this when KISS-generated Jobs require a
+    # compatibility PriorityClass that the cluster does not provide.
+    create: false
+    items:
+      - name: k8s-cluster-critical
+        value: 1000000000
+        globalDefault: false
+        description: Compatibility PriorityClass for OpenARK KISS Jobs.
+        preemptionPolicy: PreemptLowerPriority
+
   # OS Configuration
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
@@ -356,11 +374,13 @@ kiss:
   power:
     # Bare-metal Box Intel AMT Configuration
     intelAmt:
+      enabled: true
       username: ""
       password: ""
 
     # Bare-metal Box IPMI Configuration
     ipmi:
+      enabled: true
       username: ""
       password: ""
 
@@ -409,6 +429,12 @@ network:
       range:
         begin: 10.32.0.0
         end: 10.32.255.254
+      # Optional DHCP default gateway for PXE/iPXE clients.
+      # Defaults to network.ipv4.gateway when unset.
+      gateway: ""
+      # Optionally advertise Kubernetes service CIDRs through the seed node.
+      serviceRoutes:
+        enabled: false
     gateway: 10.47.255.254
     subnet: 10.32.0.0/12
 

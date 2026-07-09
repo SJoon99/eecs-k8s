@@ -1,7 +1,8 @@
 ---
 - name: Patch node | Prepare
+{{- $assetsBaseUrl := .Values.assets.baseUrl | default ( printf "http://assets.%s.svc.%s" .Release.Namespace ( include "helm.clusterDomainName" $ ) ) }}
   set_fact:
-    patch_base_url: "http://assets.{{ $.Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/patches"
+    patch_base_url: {{ printf "%s/patches" $assetsBaseUrl | quote }}
     patch_files:
 {{- range $path, $_ := $.Files.Glob "assets/patches/*.sh" }}
       - {{ base $path | quote }}

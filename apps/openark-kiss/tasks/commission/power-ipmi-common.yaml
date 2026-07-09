@@ -1,8 +1,21 @@
 ---
+{{- $ipmi := .Values.kiss.power.ipmi | default dict }}
+{{- $ipmiEnabled := true }}
+{{- if hasKey $ipmi "enabled" }}
+{{- $ipmiEnabled = $ipmi.enabled }}
+{{- end }}
 - name: Check whether IPMI exists
+  when: {{ $ipmiEnabled }}
   stat:
     path: /dev/ipmi0
   register: ipmi
+
+- name: Disable IPMI power plane
+  when: {{ not $ipmiEnabled }}
+  set_fact:
+    ipmi:
+      stat:
+        exists: false
 
 - name: Download nerdctl command
   when: ipmi.stat.exists

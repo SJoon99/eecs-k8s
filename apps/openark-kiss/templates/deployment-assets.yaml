@@ -22,7 +22,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmaps: {{ include "configmaps.assets" $ | sha256sum | quote }} 
+        checksum/configmaps: {{ include "configmaps.assets" $ | sha256sum | quote }}
       labels:
         {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
         {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
@@ -30,6 +30,10 @@ spec:
 {{- include "helm.labels" $ | nindent 8 }}
         app.kubernetes.io/component: assets
     spec:
+{{- with .Values.kiss.tolerations }}
+      tolerations:
+{{ toYaml . | nindent 8 }}
+{{- end }}
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -114,7 +118,10 @@ spec:
           - {{ .Values.network.nameservers.ns1 | quote }}
           - {{ .Values.network.nameservers.ns2 | quote }}
       dnsPolicy: ClusterFirst
-      priorityClassName: k8s-cluster-critical
+{{- $priorityClassName := (hasKey .Values.kiss "priorityClassName" | ternary .Values.kiss.priorityClassName "k8s-cluster-critical") }}
+{{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName | quote }}
+{{- end }}
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -147,7 +154,7 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
     app.kubernetes.io/component: assets
 spec:
-  type: LoadBalancer
+  type: {{ .Values.assets.service.type | default "LoadBalancer" | quote }}
   selector:
 {{- include "helm.selectorLabels" $ | nindent 4 }}
     app.kubernetes.io/component: assets
@@ -156,3 +163,6 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 8080
+{{- if .Values.assets.service.nodePort }}
+      nodePort: {{ .Values.assets.service.nodePort }}
+{{- end }}

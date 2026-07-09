@@ -11,5 +11,6 @@ ADDRESS="$(ip route get 1.1.1.1 | grep -oP 'src \K\d+(\.\d+){3}' | head -1)"
 UUID="$(cat /sys/class/dmi/id/product_uuid)"
 
 # Submit to KISS Cluster
+{{- $submitBaseUrl := .Values.apiserver.externalBaseUrl | default ( printf "http://apiserver.%s.svc.%s" .Release.Namespace ( include "helm.clusterDomainName" $ ) ) }}
 exec curl --retry 5 --retry-delay 5 \
-    "http://apiserver.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/new?address=${ADDRESS}&uuid=${UUID}"
+    "{{ $submitBaseUrl }}/new?address=${ADDRESS}&uuid=${UUID}"

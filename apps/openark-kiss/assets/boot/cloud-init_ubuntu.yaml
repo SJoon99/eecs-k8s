@@ -1,3 +1,4 @@
+{{- $assetsBaseUrl := .Values.assets.baseUrl | default ( printf "http://assets.%s.svc.%s" .Release.Namespace ( include "helm.clusterDomainName" $ ) ) -}}
 #cloud-config
 version: 1
 autoinstall:
@@ -5,8 +6,11 @@ autoinstall:
 
   apt:
     fallback: abort
-    geoip: true
+    geoip: false
     preserve_sources_list: false
+    mirror-selection:
+      primary:
+        - uri: {{ .Values.kiss.apt.mirror.uri | quote }}
   kernel:
 {{- if eq "edge" .Values.kiss.os.kernel }}
     flavor: hwe
@@ -15,13 +19,11 @@ autoinstall:
     layout: us
   locale: en_US.UTF-8
   network:
-    version: 2
-    renderer: NetworkManager
-    ethernets:
-      alleths:
-        match:
-          name: en*
-        dhcp4: true
+{{- if $.Values.cluster.standalone }}
+{{ include "helm.seedNetworkBody" ( dict "root" $ "renderer" "NetworkManager" ) | nindent 4 }}
+{{- else }}
+{{ include "helm.pxeNetworkBody" ( dict "root" $ "renderer" "NetworkManager" ) | nindent 4 }}
+{{- end }}
   # refresh-installer:
   #   update: true
   shutdown: reboot
@@ -59,6 +61,8 @@ autoinstall:
 {{- end }}
 
   storage:
+    grub:
+      remove_duplicate_entries: false
     swap:
       size: 0
     config:
@@ -164,23 +168,6 @@ autoinstall:
         type: mount
         path: /opt/etcd
         device: format_etcd
-{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
-      # Logical Volume / OpenARK VINE Session
-      - id: lv_openark_vine_session
-        name: lv_openark_vine_session
-        type: lvm_partition
-        volgroup: vg_rootfs
-        size: {{ .Values.kiss.storage.volumes.vine.size | quote }}
-      - id: format_openark_vine_session
-        type: format
-        fstype: {{ .Values.kiss.storage.fstype | quote }}
-        volume: lv_openark_vine_session
-        preserve: false
-      - id: mount_openark_vine_session
-        type: mount
-        path: /mnt/openark-vine-session
-        device: format_openark_vine_session
-{{- end }}
 {{- else }}
       # Partition / Root
       - id: partition_root
@@ -213,11 +200,13 @@ autoinstall:
 
   early-commands:
     # Installer Network Configuration
+{{- $seedMode := $.Values.bootstrapper.network.seed.mode | default "dhcp" }}
 {{- if not $.Values.cluster.standalone }}
     - |
       cat <<EOF >>/etc/systemd/resolved.conf
       [Resolve]
-      DNS={{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
+      DNS={{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }} {{ .Values.network.nameservers.ns1 }} {{ .Values.network.nameservers.ns2 }}
+      FallbackDNS={{ .Values.network.nameservers.ns1 }} {{ .Values.network.nameservers.ns2 }}
       EOF
       systemctl restart systemd-resolved.service
 {{- end }}
@@ -229,53 +218,104 @@ autoinstall:
       rc-manager=resolvconf
       EOF
     - rm -f /etc/netplan/50-cloud-init*
+{{- if $.Values.cluster.standalone }}
+{{- if eq $seedMode "auto-static" }}
+    - |
+{{ include "helm.seedAutoStaticScript" ( dict "root" $ ) | nindent 6 }}
+    - until /tmp/kumho-seed-auto-static.sh networkd; do sleep 3; done
+    - until ip -4 route get 1.1.1.1; do sleep 3; done
+    - |
+      set -e
+      apt-get clean
+      apt-get update
+      apt-get install -y network-manager
+      systemctl disable --now systemd-networkd.service systemd-networkd.socket
+      systemctl enable --now NetworkManager.service
+      /tmp/kumho-seed-auto-static.sh NetworkManager
+      until systemctl is-active --quiet NetworkManager.service && nmcli general status >/dev/null 2>&1; do
+        sleep 1
+      done
+      nmcli connection reload || true
+{{- else }}
     - |
       cat <<EOF >/etc/netplan/50-cloud-init.yaml
       network:
-        version: 2
-        renderer: NetworkManager
-        ethernets:
-          alleths:
-            match:
-              name: en*
-            dhcp4: true
+{{ include "helm.seedNetworkBody" ( dict "root" $ "renderer" "networkd" ) | nindent 8 }}
       EOF
     - >
-      apt-get clean && apt-get update && apt-get install -y network-manager
-      && systemctl disable --now systemd-networkd.service systemd-networkd.socket
-      && systemctl enable --now NetworkManager.service
-      && nmcli connection reload
-      && for dev in $(nmcli connection show --active | awk '{print $4}' | grep -P '^en'); do
-      nmcli connection down "${dev}" || true
-      ; done
-    - until netplan apply; do sleep 3; done
+      until netplan apply; do sleep 3; done
+      && until ip -4 route get 1.1.1.1; do sleep 3; done
+    - |
+      set -e
+      apt-get clean
+      apt-get update
+      apt-get install -y network-manager
+      cat <<EOF >/etc/netplan/50-cloud-init.yaml
+      network:
+{{ include "helm.seedNetworkBody" ( dict "root" $ "renderer" "NetworkManager" ) | nindent 8 }}
+      EOF
+      systemctl disable --now systemd-networkd.service systemd-networkd.socket
+      systemctl enable --now NetworkManager.service
+      netplan apply
+      until systemctl is-active --quiet NetworkManager.service && nmcli general status >/dev/null 2>&1; do
+        sleep 1
+      done
+      nmcli connection reload || true
+{{- end }}
+{{- else }}
+    - |
+      cat <<EOF >/etc/netplan/50-cloud-init.yaml
+      network:
+{{ include "helm.pxeNetworkBody" ( dict "root" $ "renderer" "NetworkManager" ) | nindent 8 }}
+      EOF
+    - |
+      set -e
+      if ! command -v nmcli >/dev/null 2>&1; then
+        apt-get clean
+        apt-get update
+        apt-get install -y network-manager
+      fi
+      systemctl disable --now systemd-networkd.service systemd-networkd.socket
+      systemctl enable --now NetworkManager.service
+      nmcli connection reload
+      netplan apply
+{{- end }}
 {{- if not $.Values.cluster.standalone }}
-    - until curl "http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}"; do netplan apply || true; sleep 30; done
+    - until curl "{{ $assetsBaseUrl }}"; do netplan apply || true; sleep 30; done
 {{- end }}
 
   late-commands:
     # Execute Post-installation Scripts
 {{- if not $.Values.cluster.standalone }}
-    - echo "nameserver {{ $.Values.cluster.nameservers.loadBalancer.ipv4 | default $.Values.cluster.nameservers.incluster.ipv4 }}" >/etc/resolv.conf # Keep DNS
+    - |
+      cat >/etc/resolv.conf <<EOF
+      nameserver {{ $.Values.cluster.nameservers.loadBalancer.ipv4 | default $.Values.cluster.nameservers.incluster.ipv4 }}
+      nameserver {{ $.Values.network.nameservers.ns1 }}
+      nameserver {{ $.Values.network.nameservers.ns2 }}
+      EOF
 {{- else }}
     - >
       echo "nameserver {{ $.Values.network.nameservers.ns1 }}" >/etc/resolv.conf
       && echo "nameserver {{ $.Values.network.nameservers.ns2 }}" >>/etc/resolv.conf
+{{- if eq $seedMode "auto-static" }}
+    - cp -L /etc/netplan/50-cloud-init.yaml /target/etc/netplan/50-cloud-init.yaml
+    - cp -L /run/kumho-seed-interface /target/var/lib/kumho-seed-interface
+{{- end }}
     - until curtin in-target --target=/target -- apt-get update; do sleep 3; done
 {{- end }}
     - rm -f /target/etc/resolv.conf && cp -L /etc/resolv.conf /target/etc/resolv.conf
     - mount --bind /tmp /target/tmp
 {{- if $.Values.cluster.standalone }}
-    - cp -Lr "/cdrom/autoinstall/smartx-k8s" "/target/opt/smartx-k8s" && chmod -R u+w,go-rwx "/target/opt/smartx-k8s"
+    - cp -Lr "/cdrom/autoinstall/kumho-k8s" "/target/opt/kumho-k8s" && chmod -R u+w,go-rwx "/target/opt/kumho-k8s"
 {{- end }}
 {{- range $path, $_ := $.Files.Glob "assets/patches/*.sh" }}
 {{- $filename := base $path }}
 {{- if $.Values.cluster.standalone }}
-    - curtin in-target --target=/target -- "/opt/smartx-k8s/patches/{{ $filename }}"
+    - curtin in-target --target=/target -- "/opt/kumho-k8s/patches/{{ $filename }}"
 {{- else }}
     - >
       curl -o "/target/tmp/{{ $filename }}"
-      "http://assets.{{ $.Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/patches/{{ $filename }}"
+      "{{ $assetsBaseUrl }}/patches/{{ $filename }}"
       && chmod a+x "/target/tmp/{{ $filename }}"
       && curtin in-target --target=/target -- "/tmp/{{ $filename }}"
       && rm -f "/target/tmp/{{ $filename }}"

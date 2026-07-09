@@ -1,13 +1,50 @@
 ---
+{{- $argoWorkflows := .Values.argoWorkflows | default dict }}
 smartx:
   cluster:
     name: {{ .Values.cluster.name | quote }}
   group:
     name: {{ .Values.group.name | quote }}
+  legacyServiceAccountTokenSecrets:
+    {{- $legacySATokenSecretConfig := ($argoWorkflows.legacyServiceAccountTokenSecrets | default dict) }}
+    enabled: {{ hasKey $legacySATokenSecretConfig "enabled" | ternary $legacySATokenSecretConfig.enabled true }}
   twin:
     namespace: {{ .Values.twin.namespace | quote }}
 
 controller:
+{{- if ($argoWorkflows.vclusterSafeScheduling | default false) }}
+  # The Tower POC runs these controllers inside a vCluster whose node labels/taints
+  # do not exactly match the physical SmartX cluster scheduling profile.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
+{{- else }}
+  # -- Assign custom [affinity] rules
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+{{- end }}
   metricsConfig:
     # -- Enables prometheus metrics server
     enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
@@ -41,6 +78,38 @@ controller:
       effect: NoExecute
 
 server:
+{{- if ($argoWorkflows.vclusterSafeScheduling | default false) }}
+  # See controller.affinity above.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
+{{- else }}
+  # -- Assign custom [affinity] rules
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+{{- end }}
   # -- [Tolerations] for use with node taints
   tolerations:
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}

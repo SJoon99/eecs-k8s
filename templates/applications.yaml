@@ -227,6 +227,64 @@ Create a SmartX application
 {{ tpl ( $.Files.Get $appPath ) $ }}
 
 {{- /*
+Create an optional cluster-local app-of-apps root.
+
+This lets concrete cluster repos keep POC/site-specific charts under their own
+apps/ directory while the common SmartX renderer stays focused on reusable app
+catalog entries.
+*/}}
+{{- $clusterLocalApps := $.Values.clusterLocalApps | default dict }}
+{{- if ($clusterLocalApps.enabled | default false) }}
+{{- $clusterLocalAppsDestination := $clusterLocalApps.destination | default dict }}
+{{- $clusterLocalAppsSyncPolicy := $clusterLocalApps.syncPolicy | default dict }}
+{{- $clusterLocalAppsAutomated := $clusterLocalAppsSyncPolicy.automated | default dict }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $clusterLocalApps.name | default (printf "%s-local-apps" $clusterName) | quote }}
+  namespace: {{ $clusterLocalApps.appNamespace | default "argo" | quote }}
+  annotations:
+    helm.sh/resource-policy: delete
+{{- with $clusterLocalApps.annotations }}
+{{ toYaml . | nindent 4 }}
+{{- end }}
+  labels:
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/name: {{ $clusterLocalApps.name | default (printf "%s-local-apps" $clusterName) | quote }}
+    app.kubernetes.io/instance: {{ .Chart.Name | quote }}
+    org.ulagbulag.io/cluster: {{ $clusterName | quote }}
+    org.ulagbulag.io/group: {{ $groupName | quote }}
+    org.ulagbulag.io/phase: "alpha"
+    org.ulagbulag.io/privileged: "false"
+    org.ulagbulag.io/project: {{ $projectName | quote }}
+    org.ulagbulag.io/scale: "small"
+    org.ulagbulag.io/tower-cluster: {{ $towerClusterName | quote }}
+    org.ulagbulag.io/tower-project: {{ $towerProjectName | quote }}
+spec:
+  project: {{ $clusterLocalApps.project | default $towerProjectName | quote }}
+  destination:
+    name: {{ $clusterLocalAppsDestination.name | default $towerClusterName | quote }}
+    namespace: {{ $clusterLocalAppsDestination.namespace | default "argo" | quote }}
+  source:
+    repoURL: {{ $clusterLocalApps.repoURL | default (printf "%s/%s/%s-k8s.git" $.Values.repo.baseUrl $.Values.repo.owner $clusterName) | quote }}
+    path: {{ $clusterLocalApps.path | default "apps" | quote }}
+    targetRevision: {{ $clusterLocalApps.targetRevision | default ($.Values.cluster.group | default "default") | quote }}
+    helm:
+      releaseName: {{ $clusterLocalApps.releaseName | default (printf "%s-local-apps" $clusterName) | quote }}
+  syncPolicy:
+    automated:
+      selfHeal: {{ $clusterLocalAppsAutomated.selfHeal | default true }}
+      prune: {{ $clusterLocalAppsAutomated.prune | default true }}
+      allowEmpty: {{ $clusterLocalAppsAutomated.allowEmpty | default true }}
+    syncOptions:
+{{- range ($clusterLocalAppsSyncPolicy.syncOptions | default (list "CreateNamespace=true" "RespectIgnoreDifferences=true" "ServerSideApply=true")) }}
+      - {{ . | quote }}
+{{- end }}
+{{- end }}
+
+{{- /*
 Create applications
 */}}
 {{- range $manifestPath, $_ := $.Files.Glob "apps/*/manifest.yaml" }}
@@ -303,11 +361,12 @@ Create applications
 # Features: {{ $.Manifest.RemainingFeatures | join ", " }}
 {{- else }}
 {{- $_ := set $.Manifest "UseClusterValues" $.Manifest.Raw.spec.app.useClusterValues | default false }}
-{{- $_ := set $.Manifest "AppCluster" $clusterName }}
+{{- $_ := set $.Manifest "Destination" ( $.Manifest.Raw.spec.app.destination | default dict ) }}
+{{- $_ := set $.Manifest "AppCluster" ( $.Manifest.Destination.name | default $clusterName ) }}
 {{- $_ := set $.Manifest "AppName" ( printf "%s-%s" $clusterName $.Manifest.Name ) }}
 {{- $_ := set $.Manifest "AppNamespace" "argo" }}
 {{- $_ := set $.Manifest "AppOfApps" false }}
-{{- $_ := set $.Manifest "AppProject" $projectName }}
+{{- $_ := set $.Manifest "AppProject" ( $.Manifest.Destination.project | default $projectName ) }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "AutoPrune" ( $.Manifest.Raw.spec.app.autoPrune | default false ) }}
 {{- $_ := set $.Manifest "AutoSync" ( $.Manifest.Raw.spec.app.autoSync | ne false ) }}

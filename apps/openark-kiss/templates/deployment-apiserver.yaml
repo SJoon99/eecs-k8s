@@ -29,6 +29,10 @@ spec:
 {{- include "helm.labels" $ | nindent 8 }}
         app.kubernetes.io/component: apiserver
     spec:
+{{- with .Values.kiss.tolerations }}
+      tolerations:
+{{ toYaml . | nindent 8 }}
+{{- end }}
       affinity:
         nodeAffinity:
           # KISS normal control plane nodes should be preferred
@@ -45,7 +49,10 @@ spec:
                     operator: In
                     values:
                       - ControlPlane
-      priorityClassName: k8s-cluster-critical
+{{- $priorityClassName := (hasKey .Values.kiss "priorityClassName" | ternary .Values.kiss.priorityClassName "k8s-cluster-critical") }}
+{{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName | quote }}
+{{- end }}
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -120,3 +127,6 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 8000
+{{- if .Values.apiserver.service.nodePort }}
+      nodePort: {{ .Values.apiserver.service.nodePort }}
+{{- end }}

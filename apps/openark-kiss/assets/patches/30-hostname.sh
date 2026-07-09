@@ -11,5 +11,15 @@ set -e -o pipefail
 set -x
 
 UUID="$(cat /sys/class/dmi/id/product_uuid)"
-echo "127.0.0.1 ${UUID}" >>/etc/hosts
+
+if ! grep -qE '^127\.0\.0\.1[[:space:]]+.*localhost' /etc/hosts; then
+  echo "127.0.0.1 localhost" >>/etc/hosts
+fi
+if ! grep -qE '^::1[[:space:]]+.*localhost' /etc/hosts; then
+  echo "::1 localhost ip6-localhost ip6-loopback" >>/etc/hosts
+fi
+if ! grep -qE "(^|[[:space:]])${UUID}($|[[:space:]])" /etc/hosts; then
+  echo "127.0.0.1 ${UUID}" >>/etc/hosts
+fi
+
 echo -n "${UUID}" >/etc/hostname

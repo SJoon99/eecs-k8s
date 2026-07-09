@@ -1,0 +1,8 @@
+---
+apiVersion: v2
+name: openark-kiss-pxe-edge
+description: Tower-owned OpenARK/KISS PXE edge for host-network DHCP/TFTP advertising
+
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2
