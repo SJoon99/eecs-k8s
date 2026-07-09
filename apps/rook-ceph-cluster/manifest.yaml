@@ -13,13 +13,12 @@ spec:
   app:
     autoSync: true
     namespace: csi-rook-ceph
-    patched: false
+    patched: true
     unsafe: true # CSI
     useClusterValues: false
     features:
       - org.ulagbulag.io/csi
       - org.ulagbulag.io/distributed-storage-cluster/ceph
-      - org.ulagbulag.io/ingress
     ignoreDifferences: []
     sync:
       createNamespace: false

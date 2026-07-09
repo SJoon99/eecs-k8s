@@ -1,9 +1,19 @@
 ---
-{{- $useReplicas := not ( .Values.cluster.singleNode | default false ) }}
+{{- $rookCeph := .Values.rookCeph | default dict }}
+{{- $useReplicas := ternary $rookCeph.useReplicas ( not ( .Values.cluster.singleNode | default false ) ) ( hasKey $rookCeph "useReplicas" ) }}
 
 # All values below are taken from the CephCluster CRD
 # More information can be found at [Ceph Cluster CRD](/Documentation/CRDs/ceph-cluster-crd.md)
 {{- if not $useReplicas }}
+configOverride: |
+  [global]
+  mon_allow_pool_delete = true
+  osd_pool_default_size = 1
+  osd_pool_default_min_size = 1
+
+  [mon]
+  mon_clock_drift_allowed = 0.1
+
 cephClusterSpec:
   mon:
     # Set the number of mons to be started. Generally recommended to be 3.
@@ -17,8 +27,11 @@ cephClusterSpec:
     count: 1
 {{- end }}
 
+{{- if has "org.ulagbulag.io/ingress" .Values.features }}
 ingress:
-  # -- Enable an ingress for the ceph-dashboard
+  # -- Enable an ingress for the ceph-dashboard only when the cluster explicitly
+  # enables the ingress feature. Storage-only child clusters do not have an
+  # ingress controller yet.
   dashboard:
     annotations:
       cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
@@ -36,7 +49,11 @@ ingress:
     # Note: Only one of ingress class annotation or the `ingressClassName:` can be used at a time
     # to set the ingress class
     ingressClassName: {{ .Values.ingress.domainName | quote }}
-
+{{- else }}
+ingress:
+  dashboard:
+    host: null
+{{- end }}
 monitoring:
   # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
   # Monitoring requires Prometheus to be pre-installed
