@@ -13,7 +13,7 @@ spec:
   app:
     autoSync: false # CNI
     namespace: kube-system
-    patched: false
+    patched: true
     unsafe: true # CNI
     useClusterValues: false
     features:
