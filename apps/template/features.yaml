@@ -315,6 +315,14 @@ org.ulagbulag.io/monitoring:
     - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/csi/object
 
+org.ulagbulag.io/multicluster:
+  requires:
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/multicluster/karmada:
+  requires:
+    - org.ulagbulag.io/multicluster
+
 org.ulagbulag.io/object-store:
   requires:
     - org.ulagbulag.io/cni

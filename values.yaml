@@ -275,6 +275,8 @@ features:
   - org.ulagbulag.io/messenger/kafka
   - org.ulagbulag.io/messenger/nats
   - org.ulagbulag.io/monitoring
+  - org.ulagbulag.io/multicluster
+  - org.ulagbulag.io/multicluster/karmada
   - org.ulagbulag.io/object-store
   - org.ulagbulag.io/object-store/minio
   - org.ulagbulag.io/observability

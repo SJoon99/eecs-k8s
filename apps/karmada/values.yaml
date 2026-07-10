@@ -1,0 +1,3 @@
+---
+# Common upstream Karmada Helm values.
+# Concrete clusters add only their overrides under patches/karmada/values.yaml.
