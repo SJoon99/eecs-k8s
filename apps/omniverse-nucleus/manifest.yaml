@@ -1,0 +1,25 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.omniverse-nucleus
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoSync: true
+    namespace: omniverse
+    patched: true
+    unsafe: true # StatefulSet + PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/omniverse/nucleus
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

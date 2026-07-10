@@ -1,0 +1,76 @@
+---
+nucleus:
+  name: omniverse-nucleus
+  namespace: omniverse
+  replicaCount: 1
+
+  labels: {}
+  podLabels: {}
+  annotations: {}
+  podAnnotations: {}
+
+  imagePullPolicy: IfNotPresent
+  imagePullSecret:
+    create: false
+    name: nvcr-io
+    registry: nvcr.io
+    username: "$oauthtoken"
+    password: ""
+
+  service:
+    type: LoadBalancer
+    loadBalancerIP: ""
+    externalHost: ""
+    annotations: {}
+    loadBalancerAnnotations: {}
+
+  storage:
+    className: ""
+    size: 10Gi
+    accessModes:
+      - ReadWriteOnce
+    retention:
+      whenDeleted: Retain
+      whenScaled: Retain
+
+  scheduling:
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+  secrets:
+    passwords:
+      create: false
+      name: nucleus-passwords
+      stringData:
+        master-password: ""
+        service-password: ""
+    runtime:
+      create: false
+      name: nucleus-secrets
+      stringData:
+        auth_root_of_trust.pub: ""
+        svc_reg_token: ""
+        lft_salt: ""
+        jwt_pubkey.pem: ""
+        jwt_pubkey.pub: ""
+        jwt_privkey.pem: ""
+        nucleus-api-user-key: ""
+
+  instance: smartx_nucleus
+
+  initImage: busybox:1.36
+
+  images:
+    api: nvcr.io/nvidia/omniverse/nucleus-api:1.14.55
+    lft: nvcr.io/nvidia/omniverse/nucleus-lft:1.14.55
+    lftLb: nvcr.io/nvidia/omniverse/nucleus-lft-lb:1.14.55
+    logProcessor: nvcr.io/nvidia/omniverse/nucleus-log-processor:1.14.55
+    resolverCache: nvcr.io/nvidia/omniverse/nucleus-resolver-cache:1.14.55
+    monpx: nvcr.io/nvidia/omniverse/utl-monpx:1.14.55
+    discovery: nvcr.io/nvidia/omniverse/nucleus-discovery:1.5.6
+    auth: nvcr.io/nvidia/omniverse/nucleus-auth:1.5.9
+    navigator: nvcr.io/nvidia/omniverse/nucleus-navigator:3.3.7
+    search: nvcr.io/nvidia/omniverse/nucleus-search:3.2.14
+    thumbnails: nvcr.io/nvidia/omniverse/nucleus-thumbnails:1.5.15
+    tagging: nvcr.io/nvidia/omniverse/nucleus-tagging:3.1.36
