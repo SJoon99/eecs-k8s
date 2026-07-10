@@ -49,13 +49,14 @@ nucleus:
       create: false
       name: nucleus-secrets
       stringData:
+        auth_root_of_trust.pem: ""
         auth_root_of_trust.pub: ""
-        svc_reg_token: ""
+        auth_root_of_trust_lt.pem: ""
+        auth_root_of_trust_lt.pub: ""
+        federation.meta.blank.xml: ""
         lft_salt: ""
-        jwt_pubkey.pem: ""
-        jwt_pubkey.pub: ""
-        jwt_privkey.pem: ""
-        nucleus-api-user-key: ""
+        pwd_salt: ""
+        svc_reg_token: ""
 
   instance: smartx_nucleus
 
