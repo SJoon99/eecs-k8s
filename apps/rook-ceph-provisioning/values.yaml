@@ -1,0 +1,20 @@
+---
+rookCephProvisioning:
+  postConfig:
+    enabled: false
+    name: rook-ceph-post-config
+    image: quay.io/ceph/ceph:v19.2.1
+    activeDeadlineSeconds: 1800
+    backoffLimit: 20
+    serviceAccountName: rook-ceph-default
+    poolName: .mgr
+    poolSize: 1
+    poolMinSize: 1
+    monClockDriftAllowed: ""
+    muteNoReplicaWarnings: false
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi

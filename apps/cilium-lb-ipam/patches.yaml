@@ -1,0 +1,3 @@
+---
+# Cluster-specific pools and policies are supplied through
+# patches/cilium-lb-ipam/values.yaml.

@@ -212,6 +212,10 @@ cluster:
 applications:
   # Applications whose capability is supplied outside this cluster.
   disabled: []
+  # Render the cluster root Application. A parent bootstrap Application can
+  # disable this to remain the root's only Argo owner.
+  root:
+    enabled: true
 
 # Bare-metal Driver Configuration
 # TODO(user): Configure it!
@@ -255,6 +259,7 @@ features:
   - org.ulagbulag.io/batch/scheduling/ray
   - org.ulagbulag.io/cni
   - org.ulagbulag.io/cni/istio
+  - org.ulagbulag.io/cni/lb-ipam
   - org.ulagbulag.io/cni/multus
   - org.ulagbulag.io/csi
   - org.ulagbulag.io/csi/block
@@ -267,6 +272,7 @@ features:
   - org.ulagbulag.io/dev
   - org.ulagbulag.io/distributed-storage-cluster
   - org.ulagbulag.io/distributed-storage-cluster/ceph
+  - org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning
   - org.ulagbulag.io/distributed-storage-cluster/data-pond
   - org.ulagbulag.io/gateway
   - org.ulagbulag.io/gateway/envoy
@@ -275,6 +281,7 @@ features:
   - org.ulagbulag.io/git/github
   - org.ulagbulag.io/git/gitlab
   - org.ulagbulag.io/gitops
+  - org.ulagbulag.io/gitops/remote
   - org.ulagbulag.io/ingress
   - org.ulagbulag.io/messenger
   - org.ulagbulag.io/messenger/kafka
@@ -282,7 +289,9 @@ features:
   - org.ulagbulag.io/monitoring
   - org.ulagbulag.io/multicluster
   - org.ulagbulag.io/multicluster/karmada
+  - org.ulagbulag.io/multicluster/karmada/members
   - org.ulagbulag.io/object-store
+  - org.ulagbulag.io/object-store/ceph
   - org.ulagbulag.io/object-store/minio
   - org.ulagbulag.io/observability
   - org.ulagbulag.io/observability/vector

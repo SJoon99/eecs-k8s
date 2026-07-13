@@ -1,0 +1,19 @@
+{{- range $pool := .Values.ciliumLbIpam.pools }}
+{{- if or (not (hasKey $pool "enabled")) $pool.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: {{ required "Cilium LB IPAM pool name is required" $pool.name | quote }}
+{{- with $pool.annotations }}
+  annotations:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $pool.labels }}
+  labels:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+spec:
+{{ required (printf "Cilium LB IPAM pool %s spec is required" $pool.name) $pool.spec | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}

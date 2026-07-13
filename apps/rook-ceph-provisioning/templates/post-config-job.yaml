@@ -1,0 +1,139 @@
+{{- $config := .Values.rookCephProvisioning.postConfig }}
+{{- if $config.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $config.name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+    argocd.argoproj.io/sync-wave: "10"
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+spec:
+  activeDeadlineSeconds: {{ $config.activeDeadlineSeconds | int }}
+  backoffLimit: {{ $config.backoffLimit | int }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ $config.serviceAccountName | quote }}
+      containers:
+        - name: ceph-post-config
+          image: {{ $config.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -ceu
+            - |
+              CEPH_CONFIG=/etc/ceph/ceph.conf
+              MON_CONFIG=/etc/rook/mon-endpoints
+              KEYRING_FILE=/etc/ceph/keyring
+              CONFIG_OVERRIDE=/etc/rook-config-override/config
+
+              mkdir -p /etc/ceph
+
+              write_ceph_config() {
+                endpoints="$(cat "${MON_CONFIG}")"
+                mon_endpoints="$(echo "${endpoints}" | sed 's/[a-z0-9_-]\+=//g')"
+                cat >"${CEPH_CONFIG}" <<CEPHCONF
+              [global]
+              mon_host = ${mon_endpoints}
+
+              [client.admin]
+              keyring = ${KEYRING_FILE}
+              CEPHCONF
+
+                if [ -s "${CONFIG_OVERRIDE}" ]; then
+                  printf '\n' >>"${CEPH_CONFIG}"
+                  cat "${CONFIG_OVERRIDE}" >>"${CEPH_CONFIG}"
+                fi
+              }
+
+              ceph_secret="${ROOK_CEPH_SECRET:-}"
+              if [ -z "${ceph_secret}" ]; then
+                ceph_secret="$(cat /var/lib/rook-ceph-mon/secret.keyring)"
+              fi
+              cat >"${KEYRING_FILE}" <<KEYRING
+              [${ROOK_CEPH_USERNAME}]
+              key = ${ceph_secret}
+              KEYRING
+
+              for i in $(seq 1 120); do
+                if [ -s "${MON_CONFIG}" ]; then
+                  write_ceph_config
+                  if ceph status >/tmp/ceph-status 2>&1; then
+                    break
+                  fi
+                fi
+                echo "waiting for Ceph monitors/admin key (${i}/120)"
+                cat /tmp/ceph-status 2>/dev/null || true
+                sleep 10
+              done
+
+              ceph status
+
+              for i in $(seq 1 120); do
+                if ceph osd pool ls | grep -qx {{ $config.poolName | quote }}; then
+                  break
+                fi
+                echo "waiting for {{ $config.poolName }} pool (${i}/120)"
+                sleep 10
+              done
+
+              ceph osd pool set {{ $config.poolName }} size {{ $config.poolSize | int }} --yes-i-really-mean-it
+              ceph osd pool set {{ $config.poolName }} min_size {{ $config.poolMinSize | int }}
+{{- with $config.monClockDriftAllowed }}
+              ceph config set mon mon_clock_drift_allowed {{ . | quote }}
+{{- end }}
+{{- if $config.muteNoReplicaWarnings }}
+              ceph config set global mon_warn_on_pool_no_redundancy false || true
+{{- end }}
+
+              ceph osd pool get {{ $config.poolName }} size
+              ceph osd pool get {{ $config.poolName }} min_size
+              ceph health detail || true
+          env:
+            - name: ROOK_CEPH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rook-ceph-mon
+                  key: ceph-username
+          resources:
+{{ toYaml $config.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/ceph
+              name: ceph-config
+            - name: mon-endpoint-volume
+              mountPath: /etc/rook
+            - name: ceph-admin-secret
+              mountPath: /var/lib/rook-ceph-mon
+            - name: rook-config-override
+              mountPath: /etc/rook-config-override
+              readOnly: true
+      volumes:
+        - name: ceph-config
+          emptyDir: {}
+        - name: mon-endpoint-volume
+          configMap:
+            name: rook-ceph-mon-endpoints
+            items:
+              - key: data
+                path: mon-endpoints
+        - name: ceph-admin-secret
+          secret:
+            secretName: rook-ceph-mon
+            items:
+              - key: ceph-secret
+                path: secret.keyring
+        - name: rook-config-override
+          configMap:
+            name: rook-config-override
+            optional: true
+{{- end }}

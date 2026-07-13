@@ -17,6 +17,9 @@ metadata:
 {{- else }}
     helm.sh/resource-policy: delete
 {{- end }}
+{{- with omit .Manifest.Annotations "helm.sh/resource-policy" "org.ulagbulag.io/approvers" "org.ulagbulag.io/owners" "org.ulagbulag.io/reviewers" }}
+{{ toYaml . | nindent 4 }}
+{{- end }}
 {{- if not ( empty .Manifest.Approvers ) }}
     org.ulagbulag.io/approvers: {{ .Manifest.Approvers | quote }}
 {{- end }}

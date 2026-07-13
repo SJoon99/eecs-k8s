@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: cilium-lb-ipam
+description: Cilium LoadBalancer IPAM and L2 announcement resources
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

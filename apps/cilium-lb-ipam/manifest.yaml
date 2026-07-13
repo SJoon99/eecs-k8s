@@ -1,0 +1,28 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.cilium-lb-ipam
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoPrune: true
+    autoSync: true
+    namespace: kube-system
+    patched: true
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/cni/lb-ipam
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true

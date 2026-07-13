@@ -153,6 +153,10 @@ org.ulagbulag.io/cni/istio:
   provides:
     - org.ulagbulag.io/gateway/istio
 
+org.ulagbulag.io/cni/lb-ipam:
+  requires:
+    - org.ulagbulag.io/cni
+
 org.ulagbulag.io/cni/multus:
   requires:
     - org.ulagbulag.io/cni
@@ -232,6 +236,10 @@ org.ulagbulag.io/distributed-storage-cluster/ceph:
     - org.ulagbulag.io/csi/filesystem
     # - org.ulagbulag.io/csi/object
 
+org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning:
+  requires:
+    - org.ulagbulag.io/distributed-storage-cluster/ceph
+
 org.ulagbulag.io/distributed-storage-cluster/data-pond:
   requires:
     - org.ulagbulag.io/distributed-storage-cluster
@@ -282,6 +290,10 @@ org.ulagbulag.io/gitops:
     - org.ulagbulag.io/git
     - org.ulagbulag.io/workflow
 
+org.ulagbulag.io/gitops/remote:
+  requires:
+    - org.ulagbulag.io/gitops
+
 org.ulagbulag.io/ingress:
   requires:
     - org.ulagbulag.io/cni
@@ -323,6 +335,10 @@ org.ulagbulag.io/multicluster/karmada:
   requires:
     - org.ulagbulag.io/multicluster
 
+org.ulagbulag.io/multicluster/karmada/members:
+  requires:
+    - org.ulagbulag.io/multicluster/karmada
+
 org.ulagbulag.io/object-store:
   requires:
     - org.ulagbulag.io/cni
@@ -331,6 +347,11 @@ org.ulagbulag.io/object-store:
     - org.ulagbulag.io/monitoring
   provides:
     - org.ulagbulag.io/csi/object
+
+org.ulagbulag.io/object-store/ceph:
+  requires:
+    - org.ulagbulag.io/distributed-storage-cluster/ceph
+    - org.ulagbulag.io/object-store
 
 org.ulagbulag.io/object-store/minio:
   requires:

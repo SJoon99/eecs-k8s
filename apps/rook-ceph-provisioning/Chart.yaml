@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: rook-ceph-provisioning
+description: SmartX post-install and access resources for Rook Ceph
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

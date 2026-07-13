@@ -190,6 +190,7 @@ Create a SmartX application
 {{- $_ := set $.Manifest "AppNamespace" "argo" }}
 {{- $_ := set $.Manifest "AppOfApps" true }}
 {{- $_ := set $.Manifest "AppProject" $towerProjectName }}
+{{- $_ := set $.Manifest "Annotations" $.Manifest.Raw.metadata.annotations }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "AutoPrune" false }}
 {{- $_ := set $.Manifest "AutoSync" true }}
@@ -224,64 +225,8 @@ Create a SmartX application
 {{- $_ := set $.Manifest "UseClusterValues" false }}
 {{- $_ := set $.Manifest "Values" dict }}
 {{- $_ := unset $.Manifest "Raw" }}
+{{- if $.Values.applications.root.enabled }}
 {{ tpl ( $.Files.Get $appPath ) $ }}
-
-{{- /*
-Create an optional cluster-local app-of-apps root.
-
-This lets concrete cluster repos keep POC/site-specific charts under their own
-apps/ directory while the common SmartX renderer stays focused on reusable app
-catalog entries.
-*/}}
-{{- $clusterLocalApps := $.Values.clusterLocalApps | default dict }}
-{{- if ($clusterLocalApps.enabled | default false) }}
-{{- $clusterLocalAppsDestination := $clusterLocalApps.destination | default dict }}
-{{- $clusterLocalAppsSyncPolicy := $clusterLocalApps.syncPolicy | default dict }}
-{{- $clusterLocalAppsAutomated := $clusterLocalAppsSyncPolicy.automated | default dict }}
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ $clusterLocalApps.name | default (printf "%s-local-apps" $clusterName) | quote }}
-  namespace: {{ $clusterLocalApps.appNamespace | default "argo" | quote }}
-  annotations:
-    helm.sh/resource-policy: delete
-{{- with $clusterLocalApps.annotations }}
-{{ toYaml . | nindent 4 }}
-{{- end }}
-  labels:
-    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-    app.kubernetes.io/name: {{ $clusterLocalApps.name | default (printf "%s-local-apps" $clusterName) | quote }}
-    app.kubernetes.io/instance: {{ .Chart.Name | quote }}
-    org.ulagbulag.io/cluster: {{ $clusterName | quote }}
-    org.ulagbulag.io/group: {{ $groupName | quote }}
-    org.ulagbulag.io/phase: "alpha"
-    org.ulagbulag.io/privileged: "false"
-    org.ulagbulag.io/project: {{ $projectName | quote }}
-    org.ulagbulag.io/scale: "small"
-    org.ulagbulag.io/tower-cluster: {{ $towerClusterName | quote }}
-    org.ulagbulag.io/tower-project: {{ $towerProjectName | quote }}
-spec:
-  project: {{ $clusterLocalApps.project | default $towerProjectName | quote }}
-  destination:
-    name: {{ $clusterLocalAppsDestination.name | default $towerClusterName | quote }}
-    namespace: {{ $clusterLocalAppsDestination.namespace | default "argo" | quote }}
-  source:
-    repoURL: {{ $clusterLocalApps.repoURL | default (printf "%s/%s/%s-k8s.git" $.Values.repo.baseUrl $.Values.repo.owner $clusterName) | quote }}
-    path: {{ $clusterLocalApps.path | default "apps" | quote }}
-    targetRevision: {{ $clusterLocalApps.targetRevision | default ($.Values.cluster.group | default "default") | quote }}
-    helm:
-      releaseName: {{ $clusterLocalApps.releaseName | default (printf "%s-local-apps" $clusterName) | quote }}
-  syncPolicy:
-    automated:
-      selfHeal: {{ $clusterLocalAppsAutomated.selfHeal | default true }}
-      prune: {{ $clusterLocalAppsAutomated.prune | default true }}
-      allowEmpty: {{ $clusterLocalAppsAutomated.allowEmpty | default true }}
-    syncOptions:
-{{- range ($clusterLocalAppsSyncPolicy.syncOptions | default (list "CreateNamespace=true" "RespectIgnoreDifferences=true" "ServerSideApply=true")) }}
-      - {{ . | quote }}
-{{- end }}
 {{- end }}
 
 {{- /*
@@ -372,6 +317,7 @@ Create applications
 {{- $_ := set $.Manifest "AppNamespace" "argo" }}
 {{- $_ := set $.Manifest "AppOfApps" false }}
 {{- $_ := set $.Manifest "AppProject" ( $.Manifest.Destination.project | default $projectName ) }}
+{{- $_ := set $.Manifest "Annotations" $.Manifest.Raw.metadata.annotations }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "AutoPrune" ( $.Manifest.Raw.spec.app.autoPrune | default false ) }}
 {{- $_ := set $.Manifest "AutoSync" ( $.Manifest.Raw.spec.app.autoSync | ne false ) }}
@@ -430,11 +376,11 @@ Create applications
 {{- $_ := set $.Manifest "Project" $projectName }}
 {{- $_ := set $.Manifest "Reviewers" ( $.Manifest.Raw.spec.users.reviewers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "Scale" ( $.Manifest.Raw.spec.scale | default "undefined" ) }}
-{{- $_ := set $.Manifest "SyncOptions" ( list
+{{- $_ := set $.Manifest "SyncOptions" ( concat ( list
   ( print "CreateNamespace=" ( $.Manifest.Raw.spec.app.sync.createNamespace | ne false ) )
   ( print "RespectIgnoreDifferences=" ( $.Manifest.Raw.spec.app.sync.respectIgnoreDifferences | ne false ) )
   ( print "ServerSideApply=" ( $.Manifest.Raw.spec.app.sync.serverSideApply | ne false ) )
-) }}
+) ( $.Manifest.Raw.spec.app.sync.options | default list ) ) }}
 {{- $_ := set $.Manifest "TowerCluster" $towerClusterName }}
 {{- $_ := set $.Manifest "TowerProject" $towerProjectName }}
 {{- $_ := set $.Manifest "Unsafe" ( $.Manifest.Raw.spec.app.unsafe | default ( not $.Manifest.AutoSync ) ) }}

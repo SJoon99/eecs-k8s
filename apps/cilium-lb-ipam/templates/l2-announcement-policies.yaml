@@ -1,0 +1,19 @@
+{{- range $policy := .Values.ciliumLbIpam.l2AnnouncementPolicies }}
+{{- if or (not (hasKey $policy "enabled")) $policy.enabled }}
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: {{ required "Cilium L2 announcement policy name is required" $policy.name | quote }}
+{{- with $policy.annotations }}
+  annotations:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $policy.labels }}
+  labels:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+spec:
+{{ required (printf "Cilium L2 announcement policy %s spec is required" $policy.name) $policy.spec | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}
