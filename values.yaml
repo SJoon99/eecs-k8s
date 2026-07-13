@@ -208,6 +208,11 @@ cluster:
   region:
     timezone: Asia/Seoul
 
+# Cluster-specific application rendering controls.
+applications:
+  # Applications whose capability is supplied outside this cluster.
+  disabled: []
+
 # Bare-metal Driver Configuration
 # TODO(user): Configure it!
 driver:

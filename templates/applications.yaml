@@ -338,6 +338,11 @@ Create applications
 # File: {{ $manifestPath }}
 # Manifest: {{ $manifestPath }}
 # Skipped: disabled-manifest
+{{- else if has $.Manifest.Name $.Values.applications.disabled }}
+---
+# File: {{ $manifestPath }}
+# Manifest: {{ $manifestPath }}
+# Skipped: disabled-by-cluster
 {{- else }}
 {{- $_ := set $.Manifest.Raw.spec.app "features" ( $.Manifest.Raw.spec.app.features | default list ) }}
 {{- with $.Manifest.Raw.spec.app.features }}
