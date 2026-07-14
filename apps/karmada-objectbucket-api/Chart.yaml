@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: karmada-objectbucket-api
+description: ObjectBucketClaim API extension for the Karmada control plane
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

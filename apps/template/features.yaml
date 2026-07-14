@@ -339,6 +339,10 @@ org.ulagbulag.io/multicluster/karmada/members:
   requires:
     - org.ulagbulag.io/multicluster/karmada
 
+org.ulagbulag.io/multicluster/karmada/objectbucket-api:
+  requires:
+    - org.ulagbulag.io/multicluster/karmada/members
+
 org.ulagbulag.io/object-store:
   requires:
     - org.ulagbulag.io/cni

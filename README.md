@@ -74,6 +74,18 @@ just build-iso "https://github.com/SmartX-Team/desktop-k8s"
 - User-friendly Web UI/UX: [Customize desktops](https://github.com/ulagbulag/openark-desktop-template), [clusters](/docs/presets.md) and digital twin online
 - Fully Open-Source Software under [GPL-3.0](/LICENSE)
 
+### ScaleX object-storage ownership
+
+The shared catalog separates object-storage capability from application
+claims. `rook-ceph-cluster` and `rook-ceph-rgw` provide the cluster-owned
+`CephObjectStore`, bucket `StorageClass`, and shared RGW endpoint. Application
+`ObjectBucketClaim` resources belong to feature charts and are placed by the
+Federation/Karmada path in the feature namespace.
+
+Tower enables `karmada-objectbucket-api` to install the namespaced OBC API in
+the Karmada control plane. This lets Argo submit feature-owned OBC templates to
+Karmada without moving Ceph cluster configuration into the User/Dev layer.
+
 # LICENSE
 
 Please refer the [LICENSE](/LICENSE) file.

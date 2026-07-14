@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
 name: rook-ceph-rgw
-description: SmartX object bucket claims and RGW access services for Rook Ceph
+description: SmartX shared RGW access services for Rook Ceph
 type: application
 version: 2.0.0-alpha.2
 appVersion: 2.0.0-alpha.2

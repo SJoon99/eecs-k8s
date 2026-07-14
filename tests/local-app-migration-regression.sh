@@ -41,6 +41,9 @@ render_apps() {
     --namespace karmada-system \
     -f "$WORK_DIR/tower-k8s/patches/karmada-members/values.yaml" >"$TMP_DIR/karmada-members.yaml"
 
+  helm template karmada-objectbucket-api "$EECS_DIR/apps/karmada-objectbucket-api" \
+    --namespace karmada-system >"$TMP_DIR/karmada-objectbucket-api.yaml"
+
   helm template remote-gitops "$EECS_DIR/apps/remote-gitops" \
     --namespace argo \
     -f "$WORK_DIR/tower-k8s/patches/remote-gitops/values.yaml" >"$TMP_DIR/remote-gitops.yaml"
@@ -92,8 +95,10 @@ assert_pool "$TMP_DIR/c-cilium.yaml" c-lb-pool 10.33.143.1 10.33.143.254 c-l2-po
 assert_rook "$TMP_DIR/b-rook.yaml"
 assert_rook "$TMP_DIR/c-rook.yaml"
 
-assert_yq 'select(.kind == "ObjectBucketClaim" and .metadata.name == "scalex-poc-bucket") |
-  .spec.bucketName == "scalex-poc" and .spec.storageClassName == "ceph-bucket"' "$TMP_DIR/b-rgw.yaml"
+if yq -e 'select(.kind == "ObjectBucketClaim")' "$TMP_DIR/b-rgw.yaml" >/dev/null 2>&1; then
+  echo "B Infra RGW render must not own application ObjectBucketClaims" >&2
+  exit 1
+fi
 assert_yq 'select(.kind == "Service" and .metadata.name == "scalex-poc-rgw") |
   .metadata.annotations."lbipam.cilium.io/ips" == "10.33.142.10" and
   .spec.type == "LoadBalancer" and
@@ -107,6 +112,12 @@ member_script="$(yq -r 'select(.kind == "ConfigMap" and .metadata.name == "karma
 grep -F 'join_member "b" "argo" "cluster-b"' <<<"$member_script" >/dev/null
 grep -F 'join_member "c" "argo" "cluster-c"' <<<"$member_script" >/dev/null
 grep -F 'cluster-karmada' <<<"$(cat "$TMP_DIR/karmada-members.yaml")" >/dev/null
+
+assert_yq 'select(.kind == "CustomResourceDefinition" and
+  .metadata.name == "objectbucketclaims.objectbucket.io") |
+  .spec.group == "objectbucket.io" and
+  .spec.scope == "Namespaced" and
+  .spec.versions[0].name == "v1alpha1"' "$TMP_DIR/karmada-objectbucket-api.yaml"
 
 if [[ -f "$TMP_DIR/remote-gitops.yaml" ]]; then
   assert_yq 'select(.kind == "Application" and .metadata.name == "b") |

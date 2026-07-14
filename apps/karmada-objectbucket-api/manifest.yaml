@@ -1,0 +1,33 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.karmada-objectbucket-api
+  annotations:
+    argocd.argoproj.io/sync-wave: "35"
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoPrune: false
+    autoSync: true
+    namespace: karmada-system
+    patched: false
+    unsafe: true
+    useClusterValues: false
+    destination:
+      name: karmada
+      project: {{ printf "%s-%s" .Values.tower.cluster .Values.tower.group | quote }}
+    features:
+      - org.ulagbulag.io/multicluster/karmada/objectbucket-api
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+      options:
+        - SkipDryRunOnMissingResource=true
