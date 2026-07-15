@@ -1,0 +1,3 @@
+---
+# Promoted workload namespaces owned by the target cluster's Infra repository.
+namespaces: []

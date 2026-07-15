@@ -1,0 +1,23 @@
+{{- range $namespace := .Values.namespaces }}
+{{- $name := required "workload namespace name is required" $namespace.name }}
+{{- $owner := required (printf "Infra owner is required for namespace %s" $name) $namespace.owner }}
+{{- $annotations := mergeOverwrite (dict) ($namespace.annotations | default dict) (dict
+  "argocd.argoproj.io/sync-options" "Delete=false,Prune=false"
+) }}
+{{- $labels := mergeOverwrite (dict
+  "app.kubernetes.io/managed-by" $.Release.Service
+  "app.kubernetes.io/part-of" "smartx"
+) ($namespace.labels | default dict) (dict
+  "scalex.io/infra-owner" $owner
+  "scalex.io/namespace-role" "workload"
+) }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $name | quote }}
+  annotations:
+{{ toYaml $annotations | nindent 4 }}
+  labels:
+{{ toYaml $labels | nindent 4 }}
+{{- end }}

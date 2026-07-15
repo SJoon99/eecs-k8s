@@ -89,6 +89,12 @@ owns only namespaced workloads and non-secret runtime bindings; it does not
 submit bucket claims through Karmada. Do not declare the same bucket from both
 paths.
 
+When an Infra dependency lives in a workload namespace, the target cluster
+also selects the common `workload-namespace` app and declares that namespace in
+its patch. Federation marks its Karmada source namespace to skip default
+namespace propagation. This keeps namespace creation/deletion in Infra and
+prevents Karmada from deleting an Infra-owned OBC with a release namespace.
+
 # LICENSE
 
 Please refer the [LICENSE](/LICENSE) file.

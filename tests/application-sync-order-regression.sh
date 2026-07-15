@@ -54,9 +54,11 @@ render_child_only b
 render_child_only c
 
 assert_wave b b-cilium-lb-ipam 20
+assert_wave b b-workload-namespace 10
 assert_wave b b-rook-ceph-provisioning 50
 assert_wave b b-rook-ceph-rgw 60
 assert_wave c c-cilium-lb-ipam 20
+assert_wave c c-workload-namespace 10
 assert_wave c c-rook-ceph-provisioning 50
 assert_wave tower tower-karmada-members 30
 assert_wave tower tower-remote-gitops 40

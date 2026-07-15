@@ -26,6 +26,13 @@ render_apps() {
     --namespace kube-system \
     -f "$WORK_DIR/c-k8s/patches/cilium-lb-ipam/values.yaml" >"$TMP_DIR/c-cilium.yaml"
 
+  helm template workload-namespace "$EECS_DIR/apps/workload-namespace" \
+    --namespace default \
+    -f "$WORK_DIR/b-k8s/patches/workload-namespace/values.yaml" >"$TMP_DIR/b-namespace.yaml"
+  helm template workload-namespace "$EECS_DIR/apps/workload-namespace" \
+    --namespace default \
+    -f "$WORK_DIR/c-k8s/patches/workload-namespace/values.yaml" >"$TMP_DIR/c-namespace.yaml"
+
   helm template rook-ceph-provisioning "$EECS_DIR/apps/rook-ceph-provisioning" \
     --namespace csi-rook-ceph \
     -f "$WORK_DIR/b-k8s/patches/rook-ceph-provisioning/values.yaml" >"$TMP_DIR/b-rook.yaml"
@@ -88,6 +95,14 @@ render_apps
 
 assert_pool "$TMP_DIR/b-cilium.yaml" b-lb-pool 10.33.142.1 10.33.142.254 b-l2-policy
 assert_pool "$TMP_DIR/c-cilium.yaml" c-lb-pool 10.33.143.1 10.33.143.254 c-l2-policy
+
+for cluster in b c; do
+  CLUSTER="$cluster" assert_yq 'select(.kind == "Namespace" and
+    .metadata.name == "scalex-rgw-analysis-web") |
+    .metadata.labels."scalex.io/infra-owner" == strenv(CLUSTER) + "-k8s" and
+    .metadata.annotations."argocd.argoproj.io/sync-options" == "Delete=false,Prune=false"' \
+    "$TMP_DIR/$cluster-namespace.yaml"
+done
 
 assert_rook "$TMP_DIR/b-rook.yaml"
 assert_rook "$TMP_DIR/c-rook.yaml"
