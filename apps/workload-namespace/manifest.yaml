@@ -21,17 +21,7 @@ spec:
     useClusterValues: false
     features:
       - org.ulagbulag.io/workload-namespace
-    ignoreDifferences:
-      - group: ""
-        kind: Namespace
-        jqPathExpressions:
-          - .metadata.annotations."resourcetemplate.karmada.io/managed-annotations"
-          - .metadata.annotations."resourcetemplate.karmada.io/managed-labels"
-          - .metadata.annotations."resourcetemplate.karmada.io/uid"
-          - .metadata.annotations."work.karmada.io/name"
-          - .metadata.annotations."work.karmada.io/namespace"
-          - .metadata.labels."karmada.io/managed"
-          - .metadata.labels."work.karmada.io/permanent-id"
+    ignoreDifferences: []
     sync:
       createNamespace: false
       respectIgnoreDifferences: true
