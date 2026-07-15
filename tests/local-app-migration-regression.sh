@@ -95,10 +95,11 @@ assert_pool "$TMP_DIR/c-cilium.yaml" c-lb-pool 10.33.143.1 10.33.143.254 c-l2-po
 assert_rook "$TMP_DIR/b-rook.yaml"
 assert_rook "$TMP_DIR/c-rook.yaml"
 
-if yq -e 'select(.kind == "ObjectBucketClaim")' "$TMP_DIR/b-rgw.yaml" >/dev/null 2>&1; then
-  echo "B Infra RGW render must not own application ObjectBucketClaims" >&2
-  exit 1
-fi
+assert_yq 'select(.kind == "ObjectBucketClaim" and .metadata.name == "tower-harbor-registry") |
+  .metadata.namespace == "csi-rook-ceph" and
+  .metadata.labels."scalex.io/infra-owner" == "b-k8s" and
+  .spec.bucketName == "tower-harbor-registry" and
+  .spec.storageClassName == "ceph-bucket"' "$TMP_DIR/b-rgw.yaml"
 assert_yq 'select(.kind == "Service" and .metadata.name == "scalex-poc-rgw") |
   .metadata.annotations."lbipam.cilium.io/ips" == "10.33.142.10" and
   .spec.type == "LoadBalancer" and

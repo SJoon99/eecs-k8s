@@ -62,6 +62,13 @@ assert_wave tower tower-karmada-members 30
 assert_wave tower tower-karmada-objectbucket-api 35
 assert_wave tower tower-remote-gitops 40
 
+yq -e 'select(.kind == "Application" and .metadata.name == "tower-harbor") |
+  .spec.destination.name == "tower" and
+  .spec.destination.namespace == "harbor" and
+  .spec.sources[0].helm.valuesObject.externalURL == "http://10.34.25.18" and
+  .spec.sources[0].helm.valueFiles[1] == "$cluster/patches/harbor/values.yaml"' \
+  "$TMP_DIR/tower.yaml" >/dev/null
+
 yq -e 'select(.kind == "Application" and .metadata.name == "b-rook-ceph-provisioning") |
   .spec.syncPolicy.automated.prune == null' "$TMP_DIR/b.yaml" >/dev/null
 yq -e 'select(.kind == "Application" and .metadata.name == "b-rook-ceph-rgw") |

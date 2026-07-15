@@ -1,3 +1,6 @@
 ---
 rookCephRgw:
   services: []
+  # Cluster-owned buckets for platform services whose lifecycle belongs to
+  # Infra rather than to a Federation feature release.
+  objectBucketClaims: []

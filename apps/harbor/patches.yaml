@@ -1,4 +1,8 @@
 ---
+{{- $externalURL := printf "https://harbor.%s" .Values.ingress.domainName -}}
+{{- if and (hasKey .Values "harbor") (hasKey .Values.harbor "externalURL") -}}
+{{- $externalURL = .Values.harbor.externalURL -}}
+{{- end }}
 expose:
   ingress:
     hosts:
@@ -20,7 +24,7 @@ expose:
 # the IP address of k8s node
 #
 # If Harbor is deployed behind the proxy, set it as the URL of proxy
-externalURL: "https://harbor.{{ .Values.ingress.domainName }}"
+externalURL: {{ $externalURL | quote }}
 
 metrics:
   enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

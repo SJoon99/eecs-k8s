@@ -76,11 +76,16 @@ just build-iso "https://github.com/SmartX-Team/desktop-k8s"
 
 ### ScaleX object-storage ownership
 
-The shared catalog separates object-storage capability from application
-claims. `rook-ceph-cluster` and `rook-ceph-rgw` provide the cluster-owned
-`CephObjectStore`, bucket `StorageClass`, and shared RGW endpoint. Application
-`ObjectBucketClaim` resources belong to feature charts and are placed by the
-Federation/Karmada path in the feature namespace.
+The shared catalog separates object-storage capability from bucket consumers.
+`rook-ceph-cluster` and `rook-ceph-rgw` provide the cluster-owned
+`CephObjectStore`, bucket `StorageClass`, and shared RGW endpoint. The RGW app
+also accepts `rookCephRgw.objectBucketClaims` for platform dependencies whose
+lifecycle is owned by a concrete `*-k8s` Infra repository, such as the bucket
+used by Tower Harbor.
+
+User/Dev feature buckets remain namespaced claims in their feature charts and
+are placed by the Federation/Karmada path. Do not declare the same bucket from
+both paths.
 
 Tower enables `karmada-objectbucket-api` to install the namespaced OBC API in
 the Karmada control plane. This lets Argo submit feature-owned OBC templates to
