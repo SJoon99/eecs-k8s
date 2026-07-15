@@ -59,7 +59,6 @@ assert_wave b b-rook-ceph-rgw 60
 assert_wave c c-cilium-lb-ipam 20
 assert_wave c c-rook-ceph-provisioning 50
 assert_wave tower tower-karmada-members 30
-assert_wave tower tower-karmada-objectbucket-api 35
 assert_wave tower tower-remote-gitops 40
 
 yq -e 'select(.kind == "Application" and .metadata.name == "tower-harbor") |
@@ -78,10 +77,12 @@ yq -e 'select(.kind == "Application" and .metadata.name == "tower-karmada-member
   .spec.syncPolicy.syncOptions[] == "SkipDryRunOnMissingResource=true"' \
   "$TMP_DIR/tower.yaml" >/dev/null
 
-yq -e 'select(.kind == "Application" and .metadata.name == "tower-karmada-objectbucket-api") |
-  .spec.destination.name == "karmada" and
-  .spec.destination.namespace == "karmada-system" and
-  .spec.project == "tower-ops"' "$TMP_DIR/tower.yaml" >/dev/null
+if yq -e 'select(.kind == "Application" and
+  .metadata.name == "tower-karmada-objectbucket-api")' \
+  "$TMP_DIR/tower.yaml" >/dev/null 2>&1; then
+  echo "Tower render unexpectedly contains the retired OBC API bridge" >&2
+  exit 1
+fi
 
 for cluster in b c; do
   if yq -e "select(.kind == \"Application\" and .metadata.name == \"$cluster\")" \

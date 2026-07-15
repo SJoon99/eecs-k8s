@@ -41,9 +41,6 @@ render_apps() {
     --namespace karmada-system \
     -f "$WORK_DIR/tower-k8s/patches/karmada-members/values.yaml" >"$TMP_DIR/karmada-members.yaml"
 
-  helm template karmada-objectbucket-api "$EECS_DIR/apps/karmada-objectbucket-api" \
-    --namespace karmada-system >"$TMP_DIR/karmada-objectbucket-api.yaml"
-
   helm template remote-gitops "$EECS_DIR/apps/remote-gitops" \
     --namespace argo \
     -f "$WORK_DIR/tower-k8s/patches/remote-gitops/values.yaml" >"$TMP_DIR/remote-gitops.yaml"
@@ -100,6 +97,14 @@ assert_yq 'select(.kind == "ObjectBucketClaim" and .metadata.name == "tower-harb
   .metadata.labels."scalex.io/infra-owner" == "b-k8s" and
   .spec.bucketName == "tower-harbor-registry" and
   .spec.storageClassName == "ceph-bucket"' "$TMP_DIR/b-rgw.yaml"
+assert_yq 'select(.kind == "ObjectBucketClaim" and .metadata.name == "rgw-analysis-web-bucket") |
+  .metadata.namespace == "scalex-rgw-analysis-web" and
+  .metadata.annotations."scalex.io/bucket-naming-mode" == "compatibility-fixed" and
+  .metadata.labels."scalex.io/infra-owner" == "b-k8s" and
+  .spec.bucketName == "rgw-analysis-web-poc" and
+  .spec.storageClassName == "ceph-bucket"' "$TMP_DIR/b-rgw.yaml"
+[[ "$(yq -r 'select(.kind == "ObjectBucketClaim") | .metadata.name' \
+  "$TMP_DIR/b-rgw.yaml" | grep -cv '^---$')" -eq 2 ]]
 assert_yq 'select(.kind == "Service" and .metadata.name == "scalex-poc-rgw") |
   .metadata.annotations."lbipam.cilium.io/ips" == "10.33.142.10" and
   .spec.type == "LoadBalancer" and
@@ -113,12 +118,6 @@ member_script="$(yq -r 'select(.kind == "ConfigMap" and .metadata.name == "karma
 grep -F 'join_member "b" "argo" "cluster-b"' <<<"$member_script" >/dev/null
 grep -F 'join_member "c" "argo" "cluster-c"' <<<"$member_script" >/dev/null
 grep -F 'cluster-karmada' <<<"$(cat "$TMP_DIR/karmada-members.yaml")" >/dev/null
-
-assert_yq 'select(.kind == "CustomResourceDefinition" and
-  .metadata.name == "objectbucketclaims.objectbucket.io") |
-  .spec.group == "objectbucket.io" and
-  .spec.scope == "Namespaced" and
-  .spec.versions[0].name == "v1alpha1"' "$TMP_DIR/karmada-objectbucket-api.yaml"
 
 if [[ -f "$TMP_DIR/remote-gitops.yaml" ]]; then
   assert_yq 'select(.kind == "Application" and .metadata.name == "b") |

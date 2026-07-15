@@ -1,2 +1,0 @@
----
-# No runtime values. The chart installs only the pinned ObjectBucketClaim CRD.

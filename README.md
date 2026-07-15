@@ -81,15 +81,13 @@ The shared catalog separates object-storage capability from bucket consumers.
 `CephObjectStore`, bucket `StorageClass`, and shared RGW endpoint. The RGW app
 also accepts `rookCephRgw.objectBucketClaims` for platform dependencies whose
 lifecycle is owned by a concrete `*-k8s` Infra repository, such as the bucket
-used by Tower Harbor.
+used by Tower Harbor or a promoted feature.
 
-User/Dev feature buckets remain namespaced claims in their feature charts and
-are placed by the Federation/Karmada path. Do not declare the same bucket from
-both paths.
-
-Tower enables `karmada-objectbucket-api` to install the namespaced OBC API in
-the Karmada control plane. This lets Argo submit feature-owned OBC templates to
-Karmada without moving Ceph cluster configuration into the User/Dev layer.
+ObjectBucketClaims are Infra dependencies: the target `*-k8s` repository owns
+them and the RGW app renders them directly into the member cluster. Federation
+owns only namespaced workloads and non-secret runtime bindings; it does not
+submit bucket claims through Karmada. Do not declare the same bucket from both
+paths.
 
 # LICENSE
 

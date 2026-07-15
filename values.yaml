@@ -290,7 +290,6 @@ features:
   - org.ulagbulag.io/multicluster
   - org.ulagbulag.io/multicluster/karmada
   - org.ulagbulag.io/multicluster/karmada/members
-  - org.ulagbulag.io/multicluster/karmada/objectbucket-api
   - org.ulagbulag.io/object-store
   - org.ulagbulag.io/object-store/ceph
   - org.ulagbulag.io/object-store/minio
