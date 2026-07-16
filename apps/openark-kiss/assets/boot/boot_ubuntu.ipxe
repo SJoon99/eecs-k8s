@@ -19,9 +19,11 @@ set assets {{ .Values.assets.baseUrl | default ( printf "http://assets.%s.svc.%s
 # Lab fallback: force the kernel/initramfs route through the PXE gateway.
 set gateway {{ .Values.network.ipv4.dhcp.gateway }}
 set dns {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
+iseq ${arch} arm64 && set dns {{ .Values.network.nameservers.ns1 }} ||
 {{- end }}
 set repo http://cdimage.ubuntu.com/releases/${os_ver}/${os_channel}
 iseq ${arch} amd64 && set repo ${assets}/assets/ubuntu-${os_ver} ||
+iseq ${arch} arm64 && set repo ${assets}/assets/ubuntu-${os_ver}-arm64 ||
 
 # Generic kernels
 set cloud_config_url ${assets}/boot/cloud-init_ubuntu.yaml

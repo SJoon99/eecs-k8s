@@ -98,7 +98,7 @@ spec:
   type: ClusterIP
   selector:
 {{- include "helm.selectorLabels" $ | nindent 4 }}
-    app.kubernetes.io/component: assets
+    app.kubernetes.io/component: dns
   ports:
     - name: dns-tcp
       protocol: TCP

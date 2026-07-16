@@ -330,6 +330,8 @@ kiss:
     repo:
       ubuntu_24_04:
         baseUrl: http://mirror.kakao.com/ubuntu-releases/24.04
+      ubuntu_24_04_arm64:
+        baseUrl: http://cdimage.ubuntu.com/ubuntu/releases/24.04/release
 
   # Bare-metal Box Authentication Configuration
   auth:
