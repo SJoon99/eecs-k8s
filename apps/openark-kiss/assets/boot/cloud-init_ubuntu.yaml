@@ -10,7 +10,10 @@ autoinstall:
     preserve_sources_list: false
     mirror-selection:
       primary:
-        - uri: {{ .Values.kiss.apt.mirror.uri | quote }}
+        - arches: [amd64, i386]
+          uri: {{ .Values.kiss.apt.mirror.uri | quote }}
+        - arches: [arm64, armhf, ppc64el, riscv64, s390x]
+          uri: {{ .Values.kiss.apt.mirror.portsUri | quote }}
   kernel:
 {{- if eq "edge" .Values.kiss.os.kernel }}
     flavor: hwe

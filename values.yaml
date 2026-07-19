@@ -333,6 +333,12 @@ kiss:
       ubuntu_24_04_arm64:
         baseUrl: http://cdimage.ubuntu.com/ubuntu/releases/24.04/release
 
+  # Architecture-aware Ubuntu package mirrors used by Subiquity.
+  apt:
+    mirror:
+      uri: http://archive.ubuntu.com/ubuntu
+      portsUri: http://ports.ubuntu.com/ubuntu-ports
+
   # Bare-metal Box Authentication Configuration
   auth:
     ssh:
