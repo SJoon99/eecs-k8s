@@ -20,6 +20,12 @@ fi
 # NOTE: https://forums.developer.nvidia.com/t/dgx-spark-keeps-rebooting-every-20-30-minutes/350692/6
 sudo apt remove -y linux-generic "linux-headers-6.8.0-*" linux-headers-generic "linux-image-6.8.0-*" linux-image-generic "linux-modules-6.8.0-*" "linux-modules-extra-6.8.0-*"
 
+# Subiquity also runs this patch inside the target chroot. Runtime network and
+# reboot operations belong to the commissioned system after its first boot.
+if systemd-detect-virt --quiet --chroot; then
+    exit
+fi
+
 # Enable wireless networking
 nmcli radio wifi on
 

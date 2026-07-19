@@ -47,6 +47,8 @@ if grep -F 'modprobe sbsa_gwdt' "$TMP_DIR/openark-kiss.yaml" >/dev/null; then
   echo 'DGX Spark watchdog must be deferred until the installed system boots' >&2
   exit 1
 fi
+grep -F 'if systemd-detect-virt --quiet --chroot; then' \
+  "$TMP_DIR/openark-kiss.yaml" >/dev/null
 
 grep -F 'location /assets/ubuntu-24.04-arm64' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'proxy_pass http://cdimage.ubuntu.com/ubuntu/releases/24.04/release;' \
