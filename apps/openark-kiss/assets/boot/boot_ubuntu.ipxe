@@ -28,6 +28,8 @@ iseq ${arch} arm64 && set repo ${assets}/assets/ubuntu-${os_ver}-arm64 ||
 # Generic kernels
 set cloud_config_url ${assets}/boot/cloud-init_ubuntu.yaml
 set image_url ${repo}/ubuntu-${os_ver}${os_rev}-live-server-${arch}.iso
+# Ubuntu publishes the arm64 netboot initrd with the +largemem ISO variant.
+iseq ${arch} arm64 && set image_url ${repo}/ubuntu-${os_ver}${os_rev}-live-server-arm64+largemem.iso ||
 set initrd_url ${repo}/netboot/${arch}/initrd
 set linux_url ${repo}/netboot/${arch}/linux
 

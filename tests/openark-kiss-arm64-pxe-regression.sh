@@ -38,6 +38,8 @@ grep -F 'iseq ${arch} amd64 && set repo ${assets}/assets/ubuntu-${os_ver} ||' \
   "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'iseq ${arch} arm64 && set repo ${assets}/assets/ubuntu-${os_ver}-arm64 ||' \
   "$TMP_DIR/openark-kiss.yaml" >/dev/null
+grep -F 'iseq ${arch} arm64 && set image_url ${repo}/ubuntu-${os_ver}${os_rev}-live-server-arm64+largemem.iso ||' \
+  "$TMP_DIR/openark-kiss.yaml" >/dev/null
 
 grep -F 'location /assets/ubuntu-24.04-arm64' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'proxy_pass http://cdimage.ubuntu.com/ubuntu/releases/24.04/release;' \
