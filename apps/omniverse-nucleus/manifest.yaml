@@ -9,7 +9,7 @@ spec:
   scale: small
   users:
     owners:
-      - ScaleX Operators <ops@smartx.kr>
+      - Changhyeon Im <ich6648@smartx.kr>
   app:
     autoSync: true
     namespace: omniverse
