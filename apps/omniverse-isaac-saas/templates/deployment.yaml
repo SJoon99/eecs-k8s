@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "omniverse-isaac-saas.name" . }}
+  namespace: {{ .Values.portal.namespace }}
+  labels:
+    {{- include "omniverse-isaac-saas.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.portal.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "omniverse-isaac-saas.name" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "omniverse-isaac-saas.name" . }}
+    spec:
+      serviceAccountName: {{ .Values.portal.serviceAccountName }}
+      {{- with .Values.portal.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: portal
+          image: {{ .Values.portal.image | quote }}
+          imagePullPolicy: {{ .Values.portal.imagePullPolicy }}
+          env:
+            - name: NAMESPACE
+              value: {{ .Values.portal.namespaceOverride | quote }}
+            - name: WRITE_ENABLED
+              value: {{ .Values.portal.writeEnabled | quote }}
+            - name: AUTH_ENABLED
+              value: {{ .Values.portal.authEnabled | quote }}
+            - name: AUTH_DISPLAY_NAME
+              value: {{ .Values.portal.authDisplayName | quote }}
+            - name: AUTH_DISPLAY_DETAIL
+              value: {{ .Values.portal.authDisplayDetail | quote }}
+            - name: ISAAC_SIM_IMAGE
+              value: {{ .Values.portal.isaacSimImage | quote }}
+            - name: IMAGE_PULL_SECRETS
+              value: {{ .Values.portal.instanceImagePullSecrets | quote }}
+            - name: DRA_API_VERSION
+              value: {{ .Values.portal.dra.apiVersion | quote }}
+            - name: DRA_DRIVER
+              value: {{ .Values.portal.dra.driver | quote }}
+            - name: DRA_DEVICE_CLASS
+              value: {{ .Values.portal.dra.deviceClass | quote }}
+            - name: DRA_MIG_DEVICE_CLASS
+              value: {{ .Values.portal.dra.migDeviceClass | quote }}
+            - name: WEBRTC_INCOMPATIBLE_PRODUCTS
+              value: {{ .Values.portal.incompatibleProducts | quote }}
+            - name: OMNI_SERVER
+              value: {{ .Values.portal.nucleus.server | quote }}
+            - name: OMNI_PROJECT_PATH
+              value: {{ .Values.portal.nucleus.projectPath | quote }}
+            - name: NUCLEUS_SECRET_NAME
+              value: {{ .Values.portal.nucleus.secretName | quote }}
+            - name: NUCLEUS_USER_KEY
+              value: {{ .Values.portal.nucleus.userKey | quote }}
+            - name: NUCLEUS_PASSWORD_KEY
+              value: {{ .Values.portal.nucleus.passwordKey | quote }}
+            - name: STREAM_INITIALIZATION_SECONDS
+              value: {{ .Values.portal.streamInitializationSeconds | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.portal.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault

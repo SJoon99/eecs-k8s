@@ -1,0 +1,41 @@
+portal:
+  name: isaac-twinx
+  namespace: omniverse
+  replicas: 1
+  image: ghcr.io/mj006648/isaac-twinx:latest
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+  serviceAccountName: isaac-twinx
+  service:
+    type: LoadBalancer
+    loadBalancerIP: ""
+    annotations: {}
+    port: 80
+    targetPort: 8080
+  writeEnabled: false
+  authEnabled: false
+  authDisplayName: Guest
+  authDisplayDetail: Login not connected
+  namespaceOverride: omniverse
+  isaacSimImage: ""
+  instanceImagePullSecrets: harbor-regcred
+  dra:
+    apiVersion: resource.k8s.io/v1
+    driver: gpu.nvidia.com
+    deviceClass: gpu.nvidia.com
+    migDeviceClass: mig.nvidia.com
+  incompatibleProducts: A100
+  nucleus:
+    server: ""
+    projectPath: Projects/demonstration
+    secretName: nucleus-cred
+    userKey: OMNI_USER
+    passwordKey: OMNI_PASS
+  streamInitializationSeconds: 120
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi

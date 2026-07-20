@@ -1,0 +1,25 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.omniverse-isaac-saas
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - Changhyeon Im <ich6648@smartx.kr>
+  app:
+    autoSync: true
+    namespace: omniverse
+    patched: true
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/omniverse/isaac-saas
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

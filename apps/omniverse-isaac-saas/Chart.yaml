@@ -1,0 +1,6 @@
+apiVersion: v2
+name: omniverse-isaac-saas
+description: Minimal Isaac Sim self-service portal for Kubernetes GPU/DRA clusters
+type: application
+version: 0.1.0
+appVersion: 0.1.0

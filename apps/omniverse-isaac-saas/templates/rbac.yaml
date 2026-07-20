@@ -1,0 +1,57 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Values.portal.serviceAccountName }}
+  namespace: {{ .Values.portal.namespace }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "delete", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["resource.k8s.io"]
+    resources: ["resourceclaims"]
+    verbs: ["get", "list", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.portal.serviceAccountName }}
+  namespace: {{ .Values.portal.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.portal.serviceAccountName }}
+    namespace: {{ .Values.portal.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Values.portal.serviceAccountName }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.portal.serviceAccountName }}-inventory
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list"]
+  - apiGroups: ["resource.k8s.io"]
+    resources: ["resourceslices", "resourceclaims"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.portal.serviceAccountName }}-inventory
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.portal.serviceAccountName }}
+    namespace: {{ .Values.portal.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.portal.serviceAccountName }}-inventory
