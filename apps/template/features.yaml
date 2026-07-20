@@ -389,8 +389,8 @@ org.ulagbulag.io/omniverse/isaac-saas:
 
 org.ulagbulag.io/omniverse/isaac-saas/dra:
   requires:
-    - org.ulagbulag.io/omniverse/isaac-saas
     - nvidia.com/gpu/dynamic-resource-allocation
+    - org.ulagbulag.io/omniverse/isaac-saas
 
 org.ulagbulag.io/registry:
   requires:
