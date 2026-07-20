@@ -9,6 +9,7 @@ autoconnect-priority=0
 
 [ethernet]
 mtu={{ item.mtu }}
+cloned-mac-address={{ all_interfaces[0].macaddress }}
 
 [bond]
 downdelay=0

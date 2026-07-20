@@ -8,6 +8,7 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 DGX_PATCH="$EECS_DIR/apps/openark-kiss/assets/patches/90-patch-nvidia-dgx.sh"
 NETWORK_TASK="$EECS_DIR/apps/openark-kiss/tasks/commission/network-ethernet.yaml"
+BOND_TEMPLATE="$EECS_DIR/apps/openark-kiss/tasks/commission/template_network-manager_11-bond.nmconnection.j2"
 
 require() {
   command -v "$1" >/dev/null || {
@@ -80,6 +81,11 @@ if [ "$(grep -Fc "ansible_facts.product_family | default('') != 'DGX Spark'" \
   echo 'DGX Spark must retain its working PXE network configuration during commissioning' >&2
   exit 1
 fi
+grep -F 'cloned-mac-address={{ all_interfaces[0].macaddress }}' \
+  "$BOND_TEMPLATE" >/dev/null || {
+  echo 'NetworkManager bonds must use the primary physical NIC MAC' >&2
+  exit 1
+}
 
 grep -F 'location /assets/ubuntu-24.04-arm64' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'proxy_pass http://cdimage.ubuntu.com/ubuntu/releases/24.04/release;' \
