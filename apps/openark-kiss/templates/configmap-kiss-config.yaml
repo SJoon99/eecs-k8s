@@ -74,6 +74,8 @@ data:
   network_ipv4_gateway: {{ .Values.network.ipv4.gateway | quote }}
   network_ipv4_subnet: {{ .Values.network.ipv4.subnet | quote }}
   network_nameserver_incluster_ipv4: {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 | quote }}
+  network_nameserver_public_1_ipv4: {{ .Values.network.nameservers.ns1 | quote }}
+  network_nameserver_public_2_ipv4: {{ .Values.network.nameservers.ns2 | quote }}
 
   ###########################################################################
   # OS Configuration

@@ -52,6 +52,27 @@ if grep -Fq 'ip=${ip}::${gateway}:${netmask}:${hostname}:BOOTIF:off:${dns}' \
 fi
 grep -F 'BOOTIF=01-${mac:hexhyp}' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 
+resolver_nameservers="$(awk '
+  /cat >\/etc\/resolv.conf <<EOF/ {
+    capture = 1
+    next
+  }
+  capture && /nameserver/ {
+    print $2
+    if (++count == 3) {
+      exit
+    }
+  }
+' "$TMP_DIR/openark-kiss.yaml")"
+if [ "$resolver_nameservers" != $'1.1.1.1\n1.0.0.1\n10.64.0.3' ]; then
+  echo 'PXE nodes must try reachable public DNS before in-cluster DNS' >&2
+  exit 1
+fi
+grep -F 'network_nameserver_public_1_ipv4: "1.1.1.1"' \
+  "$TMP_DIR/openark-kiss.yaml" >/dev/null
+grep -F 'network_nameserver_public_2_ipv4: "1.0.0.1"' \
+  "$TMP_DIR/openark-kiss.yaml" >/dev/null
+
 grep -F 'arches: [amd64, i386]' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'uri: "http://mirror.kakao.com/ubuntu"' \
   "$TMP_DIR/openark-kiss.yaml" >/dev/null

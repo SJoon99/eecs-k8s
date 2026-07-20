@@ -215,7 +215,7 @@ autoinstall:
     - |
       cat <<EOF >>/etc/systemd/resolved.conf
       [Resolve]
-      DNS={{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }} {{ .Values.network.nameservers.ns1 }} {{ .Values.network.nameservers.ns2 }}
+      DNS={{ .Values.network.nameservers.ns1 }} {{ .Values.network.nameservers.ns2 }} {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
       FallbackDNS={{ .Values.network.nameservers.ns1 }} {{ .Values.network.nameservers.ns2 }}
       EOF
       systemctl restart systemd-resolved.service
@@ -299,9 +299,9 @@ autoinstall:
 {{- if not $.Values.cluster.standalone }}
     - |
       cat >/etc/resolv.conf <<EOF
-      nameserver {{ $.Values.cluster.nameservers.loadBalancer.ipv4 | default $.Values.cluster.nameservers.incluster.ipv4 }}
       nameserver {{ $.Values.network.nameservers.ns1 }}
       nameserver {{ $.Values.network.nameservers.ns2 }}
+      nameserver {{ $.Values.cluster.nameservers.loadBalancer.ipv4 | default $.Values.cluster.nameservers.incluster.ipv4 }}
       EOF
 {{- else }}
     - >
