@@ -13,7 +13,7 @@ spec:
   app:
     autoSync: true
     namespace: gpu-nvidia
-    patched: false
+    patched: true
     unsafe: false
     useClusterValues: false
     features:
