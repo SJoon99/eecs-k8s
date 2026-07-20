@@ -40,6 +40,14 @@ grep -F 'iseq ${arch} arm64 && set repo ${assets}/assets/ubuntu-${os_ver}-arm64 
   "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'iseq ${arch} arm64 && set image_url ${repo}/ubuntu-${os_ver}${os_rev}-live-server-arm64+largemem.iso ||' \
   "$TMP_DIR/openark-kiss.yaml" >/dev/null
+grep -F 'ip=${ip}::${gateway}:${netmask}:${hostname}::off:${dns}' \
+  "$TMP_DIR/openark-kiss.yaml" >/dev/null
+if grep -Fq 'ip=${ip}::${gateway}:${netmask}:${hostname}:BOOTIF:off:${dns}' \
+  "$TMP_DIR/openark-kiss.yaml"; then
+  echo 'BOOTIF must select the initramfs NIC by MAC, not as a literal device name' >&2
+  exit 1
+fi
+grep -F 'BOOTIF=01-${mac:hexhyp}' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 
 grep -F 'arches: [amd64, i386]' "$TMP_DIR/openark-kiss.yaml" >/dev/null
 grep -F 'uri: "http://mirror.kakao.com/ubuntu"' \

@@ -40,9 +40,12 @@ kernel --name vmlinuz ${linux_url} || goto kernel
 initrd --name initrd ${initrd_url} || goto initrd
 
 :initargs
+# Leave the ip= device field empty.  Casper resolves the Linux interface from
+# the separate BOOTIF MAC; using the literal word "BOOTIF" here makes it wait
+# for a non-existent /sys/class/net/BOOTIF device.
 imgargs vmlinuz initrd=initrd autoinstall \
     console=tty \
-    ip=${ip}::${gateway}:${netmask}:${hostname}:BOOTIF:off:${dns} \
+    ip=${ip}::${gateway}:${netmask}:${hostname}::off:${dns} \
     BOOTIF=01-${mac:hexhyp} \
     modprobe.blacklist=rndis_host \
     url=${image_url} \
