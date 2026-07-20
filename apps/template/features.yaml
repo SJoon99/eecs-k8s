@@ -481,5 +481,10 @@ org.ulagbulag.io/workflow/tekton:
   requires:
     - org.ulagbulag.io/workflow
 
+org.ulagbulag.io/workflow/tekton/ci:
+  requires:
+    - org.ulagbulag.io/workflow/tekton
+    - org.ulagbulag.io/workload-namespace
+
 org.ulagbulag.io/workload-namespace:
   requires: []

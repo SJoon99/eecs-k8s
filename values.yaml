@@ -312,6 +312,7 @@ features:
   - org.ulagbulag.io/workflow
   - org.ulagbulag.io/workflow/argo
   - org.ulagbulag.io/workflow/tekton
+  - org.ulagbulag.io/workflow/tekton/ci
   - org.ulagbulag.io/workload-namespace
 
 # TODO(user): Configure it!
