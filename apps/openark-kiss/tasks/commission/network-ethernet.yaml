@@ -272,6 +272,7 @@
 - name: Configure network interfaces
   when:
     - interface_primary is defined
+    - ansible_facts.product_family | default('') != 'DGX Spark'
   include_tasks: network-ethernet-conf-common.yaml
 
 - name: Configure network interfaces | NetworkManager
@@ -279,6 +280,7 @@
     - interface_primary is defined
     - not interface_primary_is_current
     - kiss_network_service == 'NetworkManager'
+    - ansible_facts.product_family | default('') != 'DGX Spark'
   include_tasks: network-ethernet-conf-network-manager.yaml
 
 - name: Configure network interfaces | systemd-networkd
@@ -286,6 +288,7 @@
     - interface_primary is defined
     - not interface_primary_is_current
     - kiss_network_service == 'systemd-networkd'
+    - ansible_facts.product_family | default('') != 'DGX Spark'
   include_tasks: network-ethernet-conf-systemd-networkd.yaml
 
 - name: Ping from primary interface to the gateway

@@ -20,8 +20,8 @@ fi
 # NOTE: https://forums.developer.nvidia.com/t/dgx-spark-keeps-rebooting-every-20-30-minutes/350692/6
 sudo apt remove -y linux-generic "linux-headers-6.8.0-*" linux-headers-generic "linux-image-6.8.0-*" linux-image-generic "linux-modules-6.8.0-*" "linux-modules-extra-6.8.0-*"
 
-# Subiquity also runs this patch inside the target chroot. Runtime network and
-# reboot operations belong to the commissioned system after its first boot.
+# Subiquity also runs this patch inside the target chroot. Runtime
+# NetworkManager operations belong to the commissioned system after first boot.
 if systemd-detect-virt --quiet --chroot; then
     exit
 fi
@@ -29,7 +29,8 @@ fi
 # Enable wireless networking
 nmcli radio wifi on
 
-# Force reboot once
-if ! ip link show dev 'wlP9p1s0'; then
-    reboot
-fi
+# Do not warm-reboot a DGX Spark from commissioning. Some firmware/OS
+# combinations lose the Realtek RJ-45 device after a warm reboot and recover
+# only after a full power cycle. Keeping the active wired link is more important
+# than forcing optional Wi-Fi discovery here.
+# NOTE: https://forums.developer.nvidia.com/t/ethernet-does-not-come-up-after-reboot-after-latest-update/361628
