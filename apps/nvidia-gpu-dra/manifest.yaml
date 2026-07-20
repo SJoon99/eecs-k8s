@@ -9,7 +9,7 @@ spec:
   scale: small
   users:
     owners:
-      - Changhyeon Im <ich6648@smartx.kr>
+      - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
     namespace: gpu-nvidia
