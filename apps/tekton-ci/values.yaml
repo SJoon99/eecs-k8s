@@ -1,0 +1,53 @@
+---
+serviceAccount:
+  create: true
+  name: tekton-ci-runner
+  automountServiceAccountToken: false
+
+# The runner starts with no Kubernetes API permissions. Add narrowly scoped
+# rules only when a reviewed Task requires direct API access.
+rbac:
+  create: true
+  name: tekton-ci-runner
+  rules: []
+
+resourceQuota:
+  enabled: true
+  name: tower-ci
+  hard:
+    pods: "20"
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    persistentvolumeclaims: "10"
+    requests.storage: 100Gi
+
+limitRange:
+  enabled: true
+  name: tower-ci
+  container:
+    default:
+      cpu: "2"
+      memory: 4Gi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+
+networkPolicy:
+  enabled: true
+  name: tower-ci-deny-ingress
+
+workspace:
+  persistentVolumeClaim:
+    enabled: false
+    name: source-workspace
+    storageClassName: ""
+    accessModes:
+      - ReadWriteMany
+    size: 10Gi
+
+# The credential value is a bootstrap boundary and is never rendered by this
+# chart. Future BuildKit Tasks may mount only this pre-created Secret by name.
+harbor:
+  credentialsSecretName: harbor-builder
