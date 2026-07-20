@@ -477,5 +477,9 @@ org.ulagbulag.io/workflow/argo:
   requires:
     - org.ulagbulag.io/workflow
 
+org.ulagbulag.io/workflow/tekton:
+  requires:
+    - org.ulagbulag.io/workflow
+
 org.ulagbulag.io/workload-namespace:
   requires: []
