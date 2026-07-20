@@ -24,8 +24,8 @@ EOF
 if [ -f '/sys/class/dmi/id/product_family' ]; then
     case "$(cat '/sys/class/dmi/id/product_family')" in
     'DGX Spark')
-        # Load the watchdog after reboot into the installed kernel. The
-        # installer chroot cannot safely load modules into its running kernel.
+        # Load the watchdog again after reboot into the installed kernel. The
+        # live installer loads its matching module from an early-command.
         # NOTE: https://forums.developer.nvidia.com/t/dgx-spark-keeps-rebooting-every-20-30-minutes/350692/6
         mkdir -p /etc/modules-load.d/
         echo 'sbsa_gwdt' >/etc/modules-load.d/sbsa_gwdt.conf

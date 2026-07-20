@@ -202,6 +202,13 @@ autoinstall:
 {{- end }}
 
   early-commands:
+    # Keep the DGX Spark firmware watchdog serviced throughout the long install.
+    # This runs in the live installer, where modules match the running kernel.
+    - |
+      if [ -r /sys/class/dmi/id/product_family ] \
+        && [ "$(cat /sys/class/dmi/id/product_family)" = 'DGX Spark' ]; then
+        modprobe sbsa_gwdt
+      fi
     # Installer Network Configuration
 {{- $seedMode := $.Values.bootstrapper.network.seed.mode | default "dhcp" }}
 {{- if not $.Values.cluster.standalone }}

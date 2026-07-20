@@ -51,8 +51,11 @@ grep -F 'uri: "http://ports.ubuntu.com/ubuntu-ports"' \
 
 grep -F "echo 'sbsa_gwdt' >/etc/modules-load.d/sbsa_gwdt.conf" \
   "$TMP_DIR/openark-kiss.yaml" >/dev/null
-if grep -F 'modprobe sbsa_gwdt' "$TMP_DIR/openark-kiss.yaml" >/dev/null; then
-  echo 'DGX Spark watchdog must be deferred until the installed system boots' >&2
+grep -F "[ \"\$(cat /sys/class/dmi/id/product_family)\" = 'DGX Spark' ]" \
+  "$TMP_DIR/openark-kiss.yaml" >/dev/null
+grep -F 'modprobe sbsa_gwdt' "$TMP_DIR/openark-kiss.yaml" >/dev/null
+if [ "$(grep -Fc 'modprobe sbsa_gwdt' "$TMP_DIR/openark-kiss.yaml")" -ne 1 ]; then
+  echo 'DGX Spark watchdog must load exactly once in the live installer' >&2
   exit 1
 fi
 grep -F 'if systemd-detect-virt --quiet --chroot; then' \
