@@ -76,7 +76,7 @@ driver:
     enabled: true
     deployDefaultCR: true
     driverType: gpu
-  useOpenKernelModules: true
+  kernelModuleType: open
   usePrecompiled: false
 
   rdma:
@@ -167,7 +167,6 @@ operator:
                   - ControlPlane
               - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
                 operator: DoesNotExist
-  defaultRuntime: containerd
   # upgrade CRD on chart upgrade, requires --disable-openapi-validation flag
   # to be passed during helm upgrade.
   upgradeCRD: true
@@ -189,7 +188,6 @@ toolkit:
   enabled: true
   # Flatcar Container Linux has no write access to /usr directory
   installDir: /opt/nvidia-runtime
-  toolkit: v1.17.4-ubuntu20.04 # TODO(user): upgrade toolkit versions
 
   env:
     - name: CONTAINERD_CONFIG

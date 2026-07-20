@@ -97,7 +97,6 @@ node-feature-discovery:
         effect: NoExecute
 
 operator:
-  defaultRuntime: {{ .Values.kubespray.container_manager | quote }}
   tolerations:
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
       operator: Exists
