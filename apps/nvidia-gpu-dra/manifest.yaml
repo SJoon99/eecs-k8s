@@ -23,6 +23,6 @@ spec:
       respectIgnoreDifferences: true
       serverSideApply: true
   source:
-    chart: nvidia-dra-driver-gpu
+    chart: dra-driver-nvidia-gpu
     repoUrl: "https://helm.ngc.nvidia.com/nvidia"
-    version: 25.8.1
+    version: 0.4.1

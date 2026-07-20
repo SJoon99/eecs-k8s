@@ -1,3 +1,5 @@
+nameOverride: nvidia-dra-driver-gpu
+
 ---
 # Specify the driver root on the host.
 # If the NVIDIA GPU driver is managed using the NVIDIA GPU Driver Container,
@@ -13,7 +15,7 @@ resources:
   gpus:
     enabled: true
   computeDomains:
-    enabled: true
+    enabled: false
 
 # Feature gates configuration following Kubernetes patterns
 # Configure feature gates as key-value pairs (feature_name: true/false)
