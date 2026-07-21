@@ -22,6 +22,7 @@ portal:
   isaacSimArm64Image: ""
   isaacSimStartXvfb: true
   isaacSimArm64StartXvfb: false
+  isaacSimArm64HostNetwork: false
   instanceImagePullSecrets: harbor-regcred
   dra:
     apiVersion: resource.k8s.io/v1

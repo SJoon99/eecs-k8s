@@ -47,6 +47,8 @@ spec:
               value: {{ .Values.portal.isaacSimStartXvfb | quote }}
             - name: ISAAC_SIM_ARM64_START_XVFB
               value: {{ .Values.portal.isaacSimArm64StartXvfb | quote }}
+            - name: ISAAC_SIM_ARM64_HOST_NETWORK
+              value: {{ .Values.portal.isaacSimArm64HostNetwork | quote }}
             - name: IMAGE_PULL_SECRETS
               value: {{ .Values.portal.instanceImagePullSecrets | quote }}
             - name: DRA_API_VERSION
