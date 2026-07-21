@@ -46,6 +46,7 @@ spec:
         set -eu
 
         rm -rf "${SOURCE_PATH:?}"/* "${SOURCE_PATH}"/.[!.]* "${SOURCE_PATH}"/..?* 2>/dev/null || true
+        git config --global --add safe.directory "$SOURCE_PATH"
         git init "$SOURCE_PATH"
         git -C "$SOURCE_PATH" remote add origin "$REPO_URL"
         git -C "$SOURCE_PATH" fetch --depth=1 origin "$SOURCE_REVISION"
