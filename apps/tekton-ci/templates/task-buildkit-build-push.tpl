@@ -40,15 +40,15 @@ spec:
       - name: DOCKER_CONFIG
         value: /home/user/.docker
     securityContext:
+      privileged: true
       runAsNonRoot: true
       runAsUser: 1000
       runAsGroup: 1000
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
+      allowPrivilegeEscalation: true
       seccompProfile:
-        type: RuntimeDefault
+        type: Unconfined
+      appArmorProfile:
+        type: Unconfined
     volumeMounts:
       - name: registry-credentials
         mountPath: /home/user/.docker

@@ -139,7 +139,9 @@ assert len(workload_resources) == 1
 workload_namespace = workload_resources[0]
 assert workload_namespace["kind"] == "Namespace"
 assert workload_namespace["metadata"]["name"] == "tower-ci"
-assert workload_namespace["metadata"]["labels"]["pod-security.kubernetes.io/enforce"] == "restricted"
+assert workload_namespace["metadata"]["labels"]["pod-security.kubernetes.io/enforce"] == "privileged"
+assert workload_namespace["metadata"]["labels"]["pod-security.kubernetes.io/audit"] == "restricted"
+assert workload_namespace["metadata"]["labels"]["pod-security.kubernetes.io/warn"] == "restricted"
 assert workload_namespace["metadata"]["labels"]["scalex.io/workload-type"] == "ci"
 PY
 

@@ -177,9 +177,16 @@ for task in tasks.values():
         assert step["computeResources"] == {}
         security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))
         assert security["runAsNonRoot"] is True
-        assert security["allowPrivilegeEscalation"] is False
-        assert security["capabilities"]["drop"] == ["ALL"]
-        assert security["seccompProfile"]["type"] == "RuntimeDefault"
+        if task["metadata"]["name"] == "child-buildkit-build-push":
+            assert security["privileged"] is True
+            assert security["allowPrivilegeEscalation"] is True
+            assert security["seccompProfile"]["type"] == "Unconfined"
+            assert security["appArmorProfile"]["type"] == "Unconfined"
+        else:
+            assert security.get("privileged", False) is False
+            assert security["allowPrivilegeEscalation"] is False
+            assert security["capabilities"]["drop"] == ["ALL"]
+            assert security["seccompProfile"]["type"] == "RuntimeDefault"
 
 build_task = tasks["child-buildkit-build-push"]
 secret_volume = build_task["spec"]["volumes"][0]
