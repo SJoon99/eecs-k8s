@@ -6,6 +6,7 @@ portal:
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   serviceAccountName: isaac-twinx
+  nodeSelector: {}
   service:
     type: LoadBalancer
     loadBalancerIP: ""
@@ -18,6 +19,9 @@ portal:
   authDisplayDetail: Login not connected
   namespaceOverride: omniverse
   isaacSimImage: ""
+  isaacSimArm64Image: ""
+  isaacSimStartXvfb: true
+  isaacSimArm64StartXvfb: false
   instanceImagePullSecrets: harbor-regcred
   dra:
     apiVersion: resource.k8s.io/v1
@@ -32,6 +36,10 @@ portal:
     userKey: OMNI_USER
     passwordKey: OMNI_PASS
   streamInitializationSeconds: 120
+  probes:
+    readinessTimeoutSeconds: 5
+    livenessTimeoutSeconds: 5
+    livenessFailureThreshold: 6
   resources:
     requests:
       cpu: 100m

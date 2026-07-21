@@ -16,6 +16,10 @@ spec:
         app.kubernetes.io/name: {{ include "omniverse-isaac-saas.name" . }}
     spec:
       serviceAccountName: {{ .Values.portal.serviceAccountName }}
+      {{- with .Values.portal.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.portal.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -37,6 +41,12 @@ spec:
               value: {{ .Values.portal.authDisplayDetail | quote }}
             - name: ISAAC_SIM_IMAGE
               value: {{ .Values.portal.isaacSimImage | quote }}
+            - name: ISAAC_SIM_ARM64_IMAGE
+              value: {{ .Values.portal.isaacSimArm64Image | quote }}
+            - name: ISAAC_SIM_START_XVFB
+              value: {{ .Values.portal.isaacSimStartXvfb | quote }}
+            - name: ISAAC_SIM_ARM64_START_XVFB
+              value: {{ .Values.portal.isaacSimArm64StartXvfb | quote }}
             - name: IMAGE_PULL_SECRETS
               value: {{ .Values.portal.instanceImagePullSecrets | quote }}
             - name: DRA_API_VERSION
@@ -70,12 +80,15 @@ spec:
               port: http
             initialDelaySeconds: 3
             periodSeconds: 10
+            timeoutSeconds: {{ .Values.portal.probes.readinessTimeoutSeconds }}
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
             initialDelaySeconds: 15
             periodSeconds: 20
+            timeoutSeconds: {{ .Values.portal.probes.livenessTimeoutSeconds }}
+            failureThreshold: {{ .Values.portal.probes.livenessFailureThreshold }}
           resources:
             {{- toYaml .Values.portal.resources | nindent 12 }}
           securityContext:
