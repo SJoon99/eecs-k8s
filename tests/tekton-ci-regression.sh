@@ -166,7 +166,8 @@ assert set(tasks) == {
     "child-buildkit-build-push",
 }
 clone_script = tasks["child-clone-exact-sha"]["spec"]["steps"][0]["script"]
-assert 'git config --global --add safe.directory "$SOURCE_PATH"' in clone_script
+assert "git config --global" not in clone_script
+assert clone_script.count('git -c safe.directory="$SOURCE_PATH"') == 4
 for task in tasks.values():
     for result in task["spec"].get("results", []):
         assert result["type"] == "string"
