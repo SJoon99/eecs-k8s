@@ -33,6 +33,7 @@ helm template tekton-ci "$EECS_DIR/apps/tekton-ci" \
   >"$TMP_DIR/tekton-ci.yaml"
 
 python3 - "$TMP_DIR/applications.yaml" "$TMP_DIR/tekton-ci.yaml" "$TOWER_DIR/values.yaml" <<'PY'
+import re
 import sys
 import yaml
 
@@ -169,7 +170,7 @@ for task in tasks.values():
         assert result["type"] == "string"
     for step in task["spec"]["steps"]:
         image = step["image"]
-        assert "@sha256:" in image and not image.endswith(":latest"), image
+        assert re.fullmatch(r"[^@]+@sha256:[0-9a-f]{64}", image), image
         assert step["computeResources"] == {}
         security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))
         assert security["runAsNonRoot"] is True
