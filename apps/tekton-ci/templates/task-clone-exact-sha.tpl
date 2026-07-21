@@ -19,10 +19,12 @@ spec:
       description: Empty workspace populated with the checked-out source tree.
   results:
     - name: checked-out-revision
+      type: string
       description: Commit SHA verified after checkout.
   steps:
     - name: clone
       image: {{ required "ci.images.git is required" .Values.ci.images.git | quote }}
+      computeResources: {}
       env:
         - name: REPO_URL
           value: $(params.repo-url)

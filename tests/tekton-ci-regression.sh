@@ -165,9 +165,12 @@ assert set(tasks) == {
     "child-buildkit-build-push",
 }
 for task in tasks.values():
+    for result in task["spec"].get("results", []):
+        assert result["type"] == "string"
     for step in task["spec"]["steps"]:
         image = step["image"]
         assert "@sha256:" in image and not image.endswith(":latest"), image
+        assert step["computeResources"] == {}
         security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))
         assert security["runAsNonRoot"] is True
         assert security["allowPrivilegeEscalation"] is False
@@ -196,6 +199,7 @@ assert [task["name"] for task in pipeline_tasks] == [
     "helm-validate",
     "build-push",
 ]
+assert all(task["taskRef"]["kind"] == "Task" for task in pipeline_tasks)
 assert pipeline_tasks[1]["runAfter"] == ["validate-input"]
 assert pipeline_tasks[2]["runAfter"] == ["clone"]
 assert pipeline_tasks[3]["runAfter"] == ["helm-validate"]

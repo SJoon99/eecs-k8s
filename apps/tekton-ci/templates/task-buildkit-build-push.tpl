@@ -25,10 +25,13 @@ spec:
       description: Checked-out Child source tree.
   results:
     - name: image-url
+      type: string
       description: OCI image repository without tag or digest.
     - name: image-tag
+      type: string
       description: Immutable source-SHA tag pushed by this run.
     - name: image-digest
+      type: string
       description: OCI digest returned by BuildKit.
   stepTemplate:
     env:
@@ -60,6 +63,7 @@ spec:
   steps:
     - name: build-and-push
       image: {{ required "ci.images.buildkit is required" .Values.ci.images.buildkit | quote }}
+      computeResources: {}
       env:
         - name: CHILD_NAME
           value: $(params.child-name)

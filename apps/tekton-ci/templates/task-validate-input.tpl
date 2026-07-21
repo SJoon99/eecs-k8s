@@ -27,6 +27,7 @@ spec:
   steps:
     - name: validate
       image: {{ required "ci.images.shell is required" .Values.ci.images.shell | quote }}
+      computeResources: {}
       env:
         - name: CHILD_NAME
           value: $(params.child-name)

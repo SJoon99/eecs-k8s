@@ -45,6 +45,7 @@ spec:
   tasks:
     - name: validate-input
       taskRef:
+        kind: Task
         name: {{ .Values.ci.names.validateInputTask | quote }}
       params:
         - name: child-name
@@ -65,6 +66,7 @@ spec:
       runAfter:
         - validate-input
       taskRef:
+        kind: Task
         name: {{ .Values.ci.names.cloneTask | quote }}
       params:
         - name: repo-url
@@ -78,6 +80,7 @@ spec:
       runAfter:
         - clone
       taskRef:
+        kind: Task
         name: {{ .Values.ci.names.helmValidateTask | quote }}
       params:
         - name: child-name
@@ -91,6 +94,7 @@ spec:
       runAfter:
         - helm-validate
       taskRef:
+        kind: Task
         name: {{ .Values.ci.names.buildPushTask | quote }}
       params:
         - name: child-name

@@ -20,6 +20,7 @@ spec:
   steps:
     - name: lint-and-render
       image: {{ required "ci.images.helm is required" .Values.ci.images.helm | quote }}
+      computeResources: {}
       env:
         - name: CHILD_NAME
           value: $(params.child-name)
