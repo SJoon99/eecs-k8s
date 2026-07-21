@@ -89,16 +89,17 @@ expected = {
     ("LimitRange", "tower-ci"),
     ("NetworkPolicy", "tower-ci-deny-ingress"),
     ("PersistentVolumeClaim", "source-workspace"),
+    ("Task", "child-validate-input"),
+    ("Task", "child-clone-exact-sha"),
+    ("Task", "child-helm-validate"),
+    ("Task", "child-buildkit-build-push"),
+    ("Pipeline", "child-build"),
 }
 actual = {(resource["kind"], resource["metadata"]["name"]) for resource in resources}
 assert actual == expected, f"unexpected Tower CI resources: {actual ^ expected}"
 assert all(resource["metadata"]["namespace"] == "tower-ci" for resource in resources)
 assert not [resource for resource in resources if resource["kind"] == "Secret"]
-assert not [
-    resource
-    for resource in resources
-    if resource["kind"] in {"Pipeline", "PipelineRun", "Task", "TaskRun"}
-]
+assert not [resource for resource in resources if resource["kind"] in {"PipelineRun", "TaskRun"}]
 
 by_kind = {resource["kind"]: resource for resource in resources}
 service_account = by_kind["ServiceAccount"]
@@ -148,9 +149,62 @@ assert network_policy == {
 }
 
 pvc = by_kind["PersistentVolumeClaim"]["spec"]
-assert pvc["storageClassName"] == "nfs-csi"
+assert pvc["storageClassName"] == "rook-ceph-filesystem-hot"
 assert pvc["accessModes"] == ["ReadWriteMany"]
 assert pvc["resources"]["requests"]["storage"] == "10Gi"
+
+tasks = {
+    resource["metadata"]["name"]: resource
+    for resource in resources
+    if resource["kind"] == "Task"
+}
+assert set(tasks) == {
+    "child-validate-input",
+    "child-clone-exact-sha",
+    "child-helm-validate",
+    "child-buildkit-build-push",
+}
+for task in tasks.values():
+    for step in task["spec"]["steps"]:
+        image = step["image"]
+        assert "@sha256:" in image and not image.endswith(":latest"), image
+        security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))
+        assert security["runAsNonRoot"] is True
+        assert security["allowPrivilegeEscalation"] is False
+        assert security["capabilities"]["drop"] == ["ALL"]
+        assert security["seccompProfile"]["type"] == "RuntimeDefault"
+
+build_task = tasks["child-buildkit-build-push"]
+secret_volume = build_task["spec"]["volumes"][0]
+assert secret_volume["secret"]["secretName"] == "harbor-builder"
+assert secret_volume["secret"]["items"] == [
+    {"key": ".dockerconfigjson", "path": "config.json"}
+]
+build_env = {
+    entry["name"]: entry["value"]
+    for entry in build_task["spec"]["steps"][0]["env"]
+}
+assert build_env["REGISTRY_HOST"] == "10.34.25.18"
+assert build_env["REGISTRY_REPOSITORY_PREFIX"] == "tower-ci"
+assert build_env["REGISTRY_INSECURE"] == "true"
+
+pipeline = by_kind["Pipeline"]
+pipeline_tasks = pipeline["spec"]["tasks"]
+assert [task["name"] for task in pipeline_tasks] == [
+    "validate-input",
+    "clone",
+    "helm-validate",
+    "build-push",
+]
+assert pipeline_tasks[1]["runAfter"] == ["validate-input"]
+assert pipeline_tasks[2]["runAfter"] == ["clone"]
+assert pipeline_tasks[3]["runAfter"] == ["helm-validate"]
+assert {result["name"] for result in pipeline["spec"]["results"]} == {
+    "source-revision",
+    "image-url",
+    "image-tag",
+    "image-digest",
+}
 PY
 
-echo "Tekton CI foundation regression: PASS"
+echo "Tekton CI foundation and Child Pipeline regression: PASS"
