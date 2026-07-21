@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
 name: tekton-ci
-description: Least-privilege execution foundation for Tower Tekton workloads
+description: Least-privilege execution foundation for Tekton workloads
 type: application
 version: 2.0.0-alpha.2
 appVersion: 2.0.0-alpha.2

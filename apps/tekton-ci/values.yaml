@@ -13,7 +13,7 @@ rbac:
 
 resourceQuota:
   enabled: true
-  name: tower-ci
+  name: tekton-ci
   hard:
     pods: "20"
     requests.cpu: "4"
@@ -25,7 +25,7 @@ resourceQuota:
 
 limitRange:
   enabled: true
-  name: tower-ci
+  name: tekton-ci
   container:
     default:
       cpu: "2"
@@ -36,7 +36,7 @@ limitRange:
 
 networkPolicy:
   enabled: true
-  name: tower-ci-deny-ingress
+  name: tekton-ci-deny-ingress
 
 workspace:
   persistentVolumeClaim:
@@ -47,7 +47,26 @@ workspace:
       - ReadWriteMany
     size: 10Gi
 
-# The credential value is a bootstrap boundary and is never rendered by this
-# chart. Future BuildKit Tasks may mount only this pre-created Secret by name.
-harbor:
-  credentialsSecretName: harbor-builder
+ci:
+  # Opt in from a cluster repository after supplying its registry boundary.
+  enabled: false
+  names:
+    validateInputTask: child-validate-input
+    cloneTask: child-clone-exact-sha
+    helmValidateTask: child-helm-validate
+    buildPushTask: child-buildkit-build-push
+    pipeline: child-build
+  # Reproducible, multi-architecture image defaults. A cluster may override
+  # these references with mirrored or separately approved digest-pinned images.
+  images:
+    shell: alpine@sha256:1e42bbe2508154c9126d48c2b8a75420c3544343bf86fd041fb7527e017a4b4a
+    git: alpine/git@sha256:062a01ad7a0eb17cff382bc5e26086b4d710e56dfdf001109a49b6d9bd378c
+    helm: alpine/helm@sha256:b80eb190fca14707e94a5090235a3f1bf2f206f26761f2890d16a1e570386236
+    buildkit: moby/buildkit@sha256:cb5bb371545222c430528556acfdf424144b69897f5deaad391bd227187e90df
+  registry:
+    host: ""
+    repositoryPrefix: ""
+    insecure: false
+    # The credential value is a bootstrap boundary and is never rendered by
+    # this chart. The Secret must use kubernetes.io/dockerconfigjson.
+    credentialsSecretName: registry-builder
