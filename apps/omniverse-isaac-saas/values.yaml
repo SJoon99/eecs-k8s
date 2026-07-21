@@ -35,6 +35,8 @@ portal:
     secretName: nucleus-cred
     userKey: OMNI_USER
     passwordKey: OMNI_PASS
+  streamCommand: /isaac-sim/runheadless.sh
+  publicEndpointFlag: --/exts/omni.kit.livestream.app/primaryStream/publicIp=
   streamInitializationSeconds: 120
   probes:
     readinessTimeoutSeconds: 5

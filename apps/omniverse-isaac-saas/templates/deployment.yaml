@@ -69,6 +69,10 @@ spec:
               value: {{ .Values.portal.nucleus.userKey | quote }}
             - name: NUCLEUS_PASSWORD_KEY
               value: {{ .Values.portal.nucleus.passwordKey | quote }}
+            - name: ISAAC_SIM_STREAM_COMMAND
+              value: {{ .Values.portal.streamCommand | quote }}
+            - name: ISAAC_SIM_PUBLIC_ENDPOINT_FLAG
+              value: {{ .Values.portal.publicEndpointFlag | quote }}
             - name: STREAM_INITIALIZATION_SECONDS
               value: {{ .Values.portal.streamInitializationSeconds | quote }}
           ports:
