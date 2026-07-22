@@ -239,6 +239,9 @@ assert "/app/installations/${GITHUB_INSTALLATION_ID}/access_tokens" in promotion
 assert "rm -f /workspace/github-app-private-key.pem" in promotion_script
 assert "git push --force-with-lease --set-upstream origin" in promotion_script
 assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_script
+assert "Problems parsing JSON" not in promotion_script
+assert "'{\\\"title" not in promotion_script
+assert "'{\"title\":\"%s\",\"head\":\"%s\"" in promotion_script
 assert "merge-base --is-ancestor" in promotion_script
 assert "helm template" in promotion_script
 assert "payload must replace the complete enrolled image set" in promotion_script

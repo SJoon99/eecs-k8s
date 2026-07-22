@@ -338,7 +338,7 @@ spec:
         rm -f /workspace/existing-pull-requests.json
         title="chore(${child}): promote ${source_revision}"
         body="Automated promotion from Tekton. Human review and merge are required."
-        request="$(printf '{\"title\":\"%s\",\"head\":\"%s\",\"base\":\"%s\",\"body\":\"%s\"}' \
+        request="$(printf '{"title":"%s","head":"%s","base":"%s","body":"%s"}' \
           "$title" "$branch" "$FEDERATION_BASE_BRANCH" "$body")"
         status="$(curl -sS -o /workspace/pull-request.json -w '%{http_code}' \
           -X POST \
