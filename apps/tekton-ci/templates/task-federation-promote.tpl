@@ -95,7 +95,7 @@ spec:
         release_name="$(yq -r '.name // ""' "$release_file")"
         [ "$release_name" = "$child" ] || { printf 'release identity mismatch\n' >&2; exit 1; }
         existing_keys="$(yq -r '.images | keys | sort | join(",")' "$values_file")"
-        payload_keys="$(yq -r '.images | keys | sort | join(",")' /workspace/payload.json)"
+        payload_keys="$(yq -r '[.images[].name] | sort | join(",")' /workspace/payload.json)"
         [ "$existing_keys" = "$payload_keys" ] || {
           printf 'payload must replace the complete enrolled image set: expected %s, got %s\n' "$existing_keys" "$payload_keys" >&2
           exit 1
@@ -115,7 +115,7 @@ spec:
             '.promotion.resolvedRevision = strenv(SOURCE_REVISION)' "$release_file"
         fi
 
-        yq -r '.images | to_entries[] | [.key, .value.repository, .value.tag, .value.digest, .value.sourceRevision] | @tsv' \
+        yq -r '.images[] | [.name, .repository, .tag, .digest, .sourceRevision] | @tsv' \
           /workspace/payload.json >/workspace/images.tsv
         printf 'images: {}\n' >"$values_file"
         tab="$(printf '\t')"
@@ -124,6 +124,7 @@ spec:
           IMAGE_DIGEST="$image_digest" SOURCE_REVISION="$image_revision" yq -i '
             .images[strenv(IMAGE_KEY)].repository = strenv(IMAGE_REPOSITORY) |
             .images[strenv(IMAGE_KEY)].tag = strenv(IMAGE_TAG) |
+            .images[strenv(IMAGE_KEY)].pullPolicy = "IfNotPresent" |
             .images[strenv(IMAGE_KEY)].digest = strenv(IMAGE_DIGEST) |
             .images[strenv(IMAGE_KEY)].sourceRevision = strenv(SOURCE_REVISION)
           ' "$values_file"
@@ -146,7 +147,7 @@ spec:
         source_branch="$(cat /workspace/source-branch)"
         candidate="$(cat /workspace/source-revision)"
         previous="$(cat /workspace/previous-resolved-revision)"
-        git init /workspace/child-source
+        git init -b main /workspace/child-source
         git -C /workspace/child-source remote add origin "$source_repo"
         git -C /workspace/child-source fetch origin "refs/heads/${source_branch}:refs/remotes/origin/${source_branch}"
         head_revision="$(git -C /workspace/child-source rev-parse "origin/${source_branch}")"

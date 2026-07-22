@@ -242,6 +242,8 @@ assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_sc
 assert "merge-base --is-ancestor" in promotion_script
 assert "helm template" in promotion_script
 assert "payload must replace the complete enrolled image set" in promotion_script
+assert "[.images[].name] | sort" in promotion_script
+assert '.pullPolicy = "IfNotPresent"' in promotion_script
 assert "all(.images[];" not in promotion_script
 assert ")] | all)" in promotion_script
 assert "main" not in [arg for arg in promotion_script.split() if arg.startswith("HEAD:refs/heads/main")]
