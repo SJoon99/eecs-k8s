@@ -159,7 +159,7 @@ spec:
         tab="$(printf '\t')"
         while IFS="$tab" read -r name key repository tag digest; do
           KEY="$key" NAME="$name" REPOSITORY="$repository" TAG="$tag" DIGEST="$digest" SOURCE_REVISION="$(params.source-revision)" \
-          yq -o=json -I=0 -i '. [strenv(KEY)] = {"name": strenv(NAME), "repository": strenv(REPOSITORY), "tag": strenv(TAG), "digest": strenv(DIGEST), "sourceRevision": strenv(SOURCE_REVISION)}' \
+          yq -o=json -I=0 -i '.[strenv(KEY)] = {"name": strenv(NAME), "repository": strenv(REPOSITORY), "tag": strenv(TAG), "digest": strenv(DIGEST), "sourceRevision": strenv(SOURCE_REVISION)}' \
             /workspace-state/images.json
         done </workspace-state/images.tsv
         tr -d '\n' </workspace-state/images.json >"$(results.images.path)"

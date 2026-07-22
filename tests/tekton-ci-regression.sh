@@ -197,6 +197,9 @@ for task in tasks.values():
             assert security["seccompProfile"]["type"] == "RuntimeDefault"
 
 build_task = tasks["child-buildkit-build-push"]
+emit_images_script = next(step for step in build_task["spec"]["steps"] if step["name"] == "emit-images")["script"]
+assert '.[strenv(KEY)]' in emit_images_script
+assert '. [strenv(KEY)]' not in emit_images_script
 secret_volume = build_task["spec"]["volumes"][1]
 assert secret_volume["secret"]["secretName"] == "harbor-builder"
 assert secret_volume["secret"]["items"] == [
