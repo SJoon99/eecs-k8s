@@ -245,6 +245,8 @@ assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_sc
 assert "Problems parsing JSON" not in promotion_script
 assert "'{\\\"title" not in promotion_script
 assert "'{\"title\":\"%s\",\"head\":\"%s\"" in promotion_script
+assert 'if type == "!!seq"' not in promotion_script
+assert '[.] | flatten | .[0].html_url // ""' in promotion_script
 assert "merge-base --is-ancestor" in promotion_script
 assert "helm template" in promotion_script
 assert "payload must replace the complete enrolled image set" in promotion_script

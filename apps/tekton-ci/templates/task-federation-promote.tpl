@@ -365,7 +365,7 @@ spec:
       script: |
         #!/bin/sh
         set -eu
-        url="$(yq -r 'if type == "!!seq" then .[0].html_url // "" else .html_url // "" end' /workspace/pull-request.json)"
+        url="$(yq -r '[.] | flatten | .[0].html_url // ""' /workspace/pull-request.json)"
         printf '%s' "$url" >"$(results.pull-request-url.path)"
         rm -f /workspace/github-token /workspace/pull-request.json
 {{- end }}
