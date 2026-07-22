@@ -184,7 +184,13 @@ for task in tasks.values():
     for step in task["spec"]["steps"]:
         image = step["image"]
         assert re.fullmatch(r"[^@]+@sha256:[0-9a-f]{64}", image), image
-        assert step["computeResources"] == {}
+        if task["metadata"]["name"] == "federation-promote":
+            assert step["computeResources"] == {
+                "requests": {"cpu": "10m", "memory": "32Mi"},
+                "limits": {"cpu": "500m", "memory": "512Mi"},
+            }
+        else:
+            assert step["computeResources"] == {}
         security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))
         assert security["runAsNonRoot"] is True
         if task["metadata"]["name"] == "child-buildkit-build-push" and step["name"] == "build-and-push":

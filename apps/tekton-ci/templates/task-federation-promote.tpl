@@ -42,7 +42,13 @@ spec:
   steps:
     - name: clone
       image: {{ required "ci.images.git is required" .Values.ci.images.git | quote }}
-      computeResources: {}
+      computeResources: &promotionStepResources
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
       env:
         - name: FEDERATION_REPO_URL
           value: {{ required "promotion.federation.repoURL is required" .Values.promotion.federation.repoURL | quote }}
@@ -55,7 +61,7 @@ spec:
 
     - name: update-release
       image: {{ required "promotion.images.yq is required" .Values.promotion.images.yq | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       env:
         - name: PAYLOAD
           value: $(params.payload)
@@ -132,7 +138,7 @@ spec:
 
     - name: verify-candidate
       image: {{ required "ci.images.git is required" .Values.ci.images.git | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       script: |
         #!/bin/sh
         set -eu
@@ -161,7 +167,7 @@ spec:
 
     - name: render-candidate
       image: {{ required "ci.images.helm is required" .Values.ci.images.helm | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       script: |
         #!/bin/sh
         set -eu
@@ -176,7 +182,7 @@ spec:
 
     - name: mint-app-jwt
       image: {{ required "promotion.images.openssl is required" .Values.promotion.images.openssl | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       env:
         - name: GITHUB_APP_ID
           valueFrom:
@@ -213,7 +219,7 @@ spec:
 
     - name: request-installation-token
       image: {{ required "promotion.images.curl is required" .Values.promotion.images.curl | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       env:
         - name: GITHUB_INSTALLATION_ID
           valueFrom:
@@ -243,7 +249,7 @@ spec:
 
     - name: extract-installation-token
       image: {{ .Values.promotion.images.yq | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       script: |
         #!/bin/sh
         set -eu
@@ -255,7 +261,7 @@ spec:
 
     - name: commit-and-push
       image: {{ required "ci.images.git is required" .Values.ci.images.git | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       script: |
         #!/bin/sh
         set -eu
@@ -298,7 +304,7 @@ spec:
 
     - name: open-pull-request
       image: {{ required "promotion.images.curl is required" .Values.promotion.images.curl | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       env:
         - name: GITHUB_REPOSITORY
           value: {{ required "promotion.federation.githubRepository is required" .Values.promotion.federation.githubRepository | quote }}
@@ -348,7 +354,7 @@ spec:
 
     - name: emit-result
       image: {{ .Values.promotion.images.yq | quote }}
-      computeResources: {}
+      computeResources: *promotionStepResources
       script: |
         #!/bin/sh
         set -eu
