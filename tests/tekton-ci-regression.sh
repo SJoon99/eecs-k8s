@@ -237,7 +237,10 @@ promotion_script = "\n".join(step.get("script", "") for step in promotion_task["
 assert "openssl dgst -sha256 -sign" in promotion_script
 assert "/app/installations/${GITHUB_INSTALLATION_ID}/access_tokens" in promotion_script
 assert "rm -f /workspace/github-app-private-key.pem" in promotion_script
-assert "git push --force-with-lease --set-upstream origin" in promotion_script
+assert 'git ls-remote --heads origin "refs/heads/${branch}"' in promotion_script
+assert '--force-with-lease="refs/heads/${branch}:${remote_revision}"' in promotion_script
+assert '--force-with-lease="refs/heads/${branch}:"' in promotion_script
+assert "git push --force " not in promotion_script
 assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_script
 assert "Problems parsing JSON" not in promotion_script
 assert "'{\\\"title" not in promotion_script

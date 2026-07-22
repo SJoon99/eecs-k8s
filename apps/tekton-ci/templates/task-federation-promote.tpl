@@ -296,11 +296,17 @@ spec:
         git config user.name 'ScaleX Federation Promotion'
         git config user.email 'scalex-federation-bot@users.noreply.github.com'
         git config credential.helper '!f() { echo username=x-access-token; echo password="$GITHUB_TOKEN"; }; f'
-        git fetch origin "refs/heads/${branch}:refs/remotes/origin/${branch}" 2>/dev/null || true
+        remote_revision="$(git ls-remote --heads origin "refs/heads/${branch}" | cut -f1)"
         git checkout -B "$branch"
         git add "$allowed_release" "$allowed_values"
         git commit -m "chore(${child}): promote ${short_revision}"
-        git push --force-with-lease --set-upstream origin "HEAD:refs/heads/${branch}"
+        if [ -n "$remote_revision" ]; then
+          git push --force-with-lease="refs/heads/${branch}:${remote_revision}" \
+            --set-upstream origin "HEAD:refs/heads/${branch}"
+        else
+          git push --force-with-lease="refs/heads/${branch}:" \
+            --set-upstream origin "HEAD:refs/heads/${branch}"
+        fi
         printf 'true' >"$(results.changed.path)"
 
     - name: open-pull-request
