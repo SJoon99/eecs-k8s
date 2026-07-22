@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "omniverse-isaac-saas.name" . }}
+  name: {{ include "omniverse-isaac-saas.deploymentName" . }}
   namespace: {{ .Values.portal.namespace }}
   labels:
     {{- include "omniverse-isaac-saas.labels" . | nindent 4 }}

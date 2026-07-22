@@ -1,5 +1,6 @@
 portal:
   name: isaac-twinx
+  deploymentName: ""
   namespace: omniverse
   replicas: 1
   image: ghcr.io/mj006648/isaac-twinx:latest
