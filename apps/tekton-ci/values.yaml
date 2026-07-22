@@ -64,6 +64,8 @@ ci:
     git: alpine/git@sha256:062a01ad7a0eb17cff382bc5e26086b4d710e56dfdfdf001109a49b6d9bd378c
     helm: alpine/helm@sha256:b80eb190fca14707e94a5090235a3f1bf2f206f26761f2890d16a1e570386236
     buildkit: moby/buildkit@sha256:cb5bb371545222c430528556acfdf424144b69897f5deaad391bd227187e90df
+    # Includes /bin/sh and /ko-app/crane for idempotent semantic-tag aliases.
+    crane: gcr.io/go-containerregistry/crane:debug@sha256:54b27703e6c602fbd6f95712910e9c8d45d4361a59274bde38aeec943734e424
   registry:
     host: ""
     repositoryPrefix: ""

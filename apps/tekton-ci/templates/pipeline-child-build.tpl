@@ -87,6 +87,8 @@ spec:
           value: $(params.child-name)
         - name: source-revision
           value: $(params.source-revision)
+        - name: chart-path
+          value: $(params.chart-path)
         - name: build-targets
           value: $(params.build-targets)
       workspaces:

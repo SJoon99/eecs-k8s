@@ -176,6 +176,8 @@ assert clone_script.count('git -c safe.directory="$SOURCE_PATH"') == 4
 payload_script = tasks["child-create-promotion-payload"]["spec"]["steps"][0]["script"]
 assert "schemaVersion" in payload_script and "sourceRevision" in payload_script
 assert '"images":load' in payload_script and "sha256" in payload_script
+assert 'immutableTag == ("sha-" + strenv(SOURCE_REVISION))' in payload_script
+assert 'test("^v(0|[1-9][0-9]*)' in payload_script
 assert "all(.[];" not in payload_script
 assert ")] | all" in payload_script
 for task in tasks.values():
@@ -205,9 +207,41 @@ for task in tasks.values():
             assert security["seccompProfile"]["type"] == "RuntimeDefault"
 
 build_task = tasks["child-buildkit-build-push"]
+assert [param["name"] for param in build_task["spec"]["params"]] == [
+    "child-name",
+    "source-revision",
+    "chart-path",
+    "build-targets",
+]
+assert [step["name"] for step in build_task["spec"]["steps"]] == [
+    "validate-targets",
+    "build-and-push",
+    "alias-semantic-tags",
+    "emit-images",
+]
+validate_targets_script = next(
+    step for step in build_task["spec"]["steps"] if step["name"] == "validate-targets"
+)["script"]
+assert '.images[strenv(IMAGE_NAME)].tag' in validate_targets_script
+assert "child image tag must be an exact v-prefixed SemVer" in validate_targets_script
+assert "valuesKey must equal image name" in validate_targets_script
+build_push_script = next(
+    step for step in build_task["spec"]["steps"] if step["name"] == "build-and-push"
+)["script"]
+assert 'immutable_tag="sha-${SOURCE_REVISION}"' in build_push_script
+assert "validated-targets.tsv" in build_push_script
+alias_script = next(
+    step for step in build_task["spec"]["steps"] if step["name"] == "alias-semantic-tags"
+)["script"]
+assert "/ko-app/crane" in alias_script
+assert "semantic tag already points to another artifact" in alias_script
+assert "semantic tag alias verification failed" in alias_script
+assert "crane tag" in alias_script
 emit_images_script = next(step for step in build_task["spec"]["steps"] if step["name"] == "emit-images")["script"]
 assert '.[strenv(KEY)]' in emit_images_script
 assert '. [strenv(KEY)]' not in emit_images_script
+assert '"tag": strenv(TAG)' in emit_images_script
+assert '"immutableTag": strenv(IMMUTABLE_TAG)' in emit_images_script
 secret_volume = build_task["spec"]["volumes"][1]
 assert secret_volume["secret"]["secretName"] == "harbor-builder"
 assert secret_volume["secret"]["items"] == [
@@ -251,6 +285,7 @@ assert "merge-base --is-ancestor" in promotion_script
 assert "helm template" in promotion_script
 assert "payload must replace the complete enrolled image set" in promotion_script
 assert "[.images[].name] | sort" in promotion_script
+assert 'immutableTag == ("sha-" + strenv(SOURCE_REVISION))' in promotion_script
 assert '.pullPolicy = "IfNotPresent"' in promotion_script
 assert "all(.images[];" not in promotion_script
 assert ")] | all)" in promotion_script
@@ -275,6 +310,10 @@ assert pipeline_tasks[1]["runAfter"] == ["validate-input"]
 assert pipeline_tasks[2]["runAfter"] == ["clone"]
 assert pipeline_tasks[3]["runAfter"] == ["helm-validate"]
 assert pipeline_tasks[4]["runAfter"] == ["build-push"]
+build_pipeline_params = {
+    param["name"]: param["value"] for param in pipeline_tasks[3]["params"]
+}
+assert build_pipeline_params["chart-path"] == "$(params.chart-path)"
 assert {result["name"] for result in pipeline["spec"]["results"]} == {
     "source-revision",
     "images",
