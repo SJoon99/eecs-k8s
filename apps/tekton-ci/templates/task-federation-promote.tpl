@@ -78,7 +78,7 @@ spec:
         case "$source_revision" in *[!0-9a-f]*) printf 'invalid source revision\n' >&2; exit 1;; esac
         SOURCE_REVISION="$source_revision" yq -e '
           (.images | length) > 0 and
-          all(.images[]; .sourceRevision == strenv(SOURCE_REVISION) and (.digest | test("^sha256:[0-9a-f]{64}$")))
+          ([.images[] | (.sourceRevision == strenv(SOURCE_REVISION) and (.digest | test("^sha256:[0-9a-f]{64}$")))] | all)
         ' /workspace/payload.json >/dev/null || { printf 'invalid atomic image set\n' >&2; exit 1; }
 
         release_file="/workspace/repository/releases/${child}/release.yaml"

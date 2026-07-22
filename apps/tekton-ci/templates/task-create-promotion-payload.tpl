@@ -58,7 +58,7 @@ spec:
         printf '%s' "$IMAGES" >/tmp/images.json
         count="$(yq -r 'length' /tmp/images.json)"
         [ "$count" -gt 0 ] || { printf 'promotion requires at least one image\n' >&2; exit 1; }
-        SOURCE_REVISION="$SOURCE_REVISION" yq -e 'all(.[]; .sourceRevision == strenv(SOURCE_REVISION) and (.digest | test("^sha256:[0-9a-f]{64}$")))' /tmp/images.json >/dev/null
+        SOURCE_REVISION="$SOURCE_REVISION" yq -e '[.[] | (.sourceRevision == strenv(SOURCE_REVISION) and (.digest | test("^sha256:[0-9a-f]{64}$")))] | all' /tmp/images.json >/dev/null
         CHILD_NAME="$CHILD_NAME" SOURCE_REVISION="$SOURCE_REVISION" PIPELINE_RUN="$PIPELINE_RUN" \
         yq -n -o=json -I=0 \
           '{"schemaVersion":"v1","childName":strenv(CHILD_NAME),"sourceRevision":strenv(SOURCE_REVISION),"pipelineRun":strenv(PIPELINE_RUN),"images":load("/tmp/images.json")}' \

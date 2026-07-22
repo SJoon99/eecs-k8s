@@ -176,6 +176,8 @@ assert clone_script.count('git -c safe.directory="$SOURCE_PATH"') == 4
 payload_script = tasks["child-create-promotion-payload"]["spec"]["steps"][0]["script"]
 assert "schemaVersion" in payload_script and "sourceRevision" in payload_script
 assert '"images":load' in payload_script and "sha256" in payload_script
+assert "all(.[];" not in payload_script
+assert ")] | all" in payload_script
 for task in tasks.values():
     for result in task["spec"].get("results", []):
         assert result["type"] == "string"
@@ -234,6 +236,8 @@ assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_sc
 assert "merge-base --is-ancestor" in promotion_script
 assert "helm template" in promotion_script
 assert "payload must replace the complete enrolled image set" in promotion_script
+assert "all(.images[];" not in promotion_script
+assert ")] | all)" in promotion_script
 assert "main" not in [arg for arg in promotion_script.split() if arg.startswith("HEAD:refs/heads/main")]
 
 pipelines = {
