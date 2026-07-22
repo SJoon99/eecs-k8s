@@ -55,6 +55,7 @@ ci:
     cloneTask: child-clone-exact-sha
     helmValidateTask: child-helm-validate
     buildPushTask: child-buildkit-build-push
+    promotionPayloadTask: child-create-promotion-payload
     pipeline: child-build
   # Reproducible, multi-architecture image defaults. A cluster may override
   # these references with mirrored or separately approved digest-pinned images.
@@ -70,3 +71,22 @@ ci:
     # The credential value is a bootstrap boundary and is never rendered by
     # this chart. The Secret must use kubernetes.io/dockerconfigjson.
     credentialsSecretName: registry-builder
+
+promotion:
+  enabled: false
+  names:
+    task: federation-promote
+    pipeline: federation-promote
+  images:
+    openssl: alpine/openssl@sha256:0cb8b9948f86d73f196cef2f828ca0b60e40c7c74d8edf9e60d9990cbb7b8b76
+    yq: mikefarah/yq@sha256:7cf28e5d67782f4b274a93a7bc54a840b553447a0807efd843d069f46bff718c
+    curl: curlimages/curl@sha256:94e9e444bcba979c2ea12e27ae39bee4cd10bc7041a472c4727a558e213744e6
+  federation:
+    repoURL: ""
+    baseBranch: main
+    githubRepository: ""
+  github:
+    credentialsSecretName: federation-promotion-github-app
+    appIDKey: appID
+    installationIDKey: installationID
+    privateKeyKey: privateKey

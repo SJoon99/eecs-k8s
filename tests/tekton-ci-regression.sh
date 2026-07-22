@@ -94,7 +94,10 @@ expected = {
     ("Task", "child-clone-exact-sha"),
     ("Task", "child-helm-validate"),
     ("Task", "child-buildkit-build-push"),
+    ("Task", "child-create-promotion-payload"),
+    ("Task", "federation-promote"),
     ("Pipeline", "child-build"),
+    ("Pipeline", "federation-promote"),
 }
 actual = {(resource["kind"], resource["metadata"]["name"]) for resource in resources}
 assert actual == expected, f"unexpected Tower CI resources: {actual ^ expected}"
@@ -164,10 +167,15 @@ assert set(tasks) == {
     "child-clone-exact-sha",
     "child-helm-validate",
     "child-buildkit-build-push",
+    "child-create-promotion-payload",
+    "federation-promote",
 }
 clone_script = tasks["child-clone-exact-sha"]["spec"]["steps"][0]["script"]
 assert "git config --global" not in clone_script
 assert clone_script.count('git -c safe.directory="$SOURCE_PATH"') == 4
+payload_script = tasks["child-create-promotion-payload"]["spec"]["steps"][0]["script"]
+assert "schemaVersion" in payload_script and "sourceRevision" in payload_script
+assert '"images":load' in payload_script and "sha256" in payload_script
 for task in tasks.values():
     for result in task["spec"].get("results", []):
         assert result["type"] == "string"
@@ -177,7 +185,7 @@ for task in tasks.values():
         assert step["computeResources"] == {}
         security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))
         assert security["runAsNonRoot"] is True
-        if task["metadata"]["name"] == "child-buildkit-build-push":
+        if task["metadata"]["name"] == "child-buildkit-build-push" and step["name"] == "build-and-push":
             assert security["privileged"] is True
             assert security["allowPrivilegeEscalation"] is True
             assert security["seccompProfile"]["type"] == "Unconfined"
@@ -189,36 +197,77 @@ for task in tasks.values():
             assert security["seccompProfile"]["type"] == "RuntimeDefault"
 
 build_task = tasks["child-buildkit-build-push"]
-secret_volume = build_task["spec"]["volumes"][0]
+secret_volume = build_task["spec"]["volumes"][1]
 assert secret_volume["secret"]["secretName"] == "harbor-builder"
 assert secret_volume["secret"]["items"] == [
     {"key": ".dockerconfigjson", "path": "config.json"}
 ]
 build_env = {
     entry["name"]: entry["value"]
-    for entry in build_task["spec"]["steps"][0]["env"]
+    for entry in build_task["spec"]["steps"][1]["env"]
 }
 assert build_env["REGISTRY_HOST"] == "10.34.25.18"
 assert build_env["REGISTRY_REPOSITORY_PREFIX"] == "tower-ci"
 assert build_env["REGISTRY_INSECURE"] == "true"
 
-pipeline = by_kind["Pipeline"]
+promotion_task = tasks["federation-promote"]
+secret_refs = [
+    env["valueFrom"]["secretKeyRef"]
+    for step in promotion_task["spec"]["steps"]
+    for env in step.get("env", [])
+    if "valueFrom" in env
+]
+assert secret_refs == [
+    {"name": "federation-promotion-github-app", "key": "appID"},
+    {"name": "federation-promotion-github-app", "key": "privateKey"},
+    {"name": "federation-promotion-github-app", "key": "installationID"},
+]
+promotion_script = "\n".join(step.get("script", "") for step in promotion_task["spec"]["steps"])
+assert "openssl dgst -sha256 -sign" in promotion_script
+assert "/app/installations/${GITHUB_INSTALLATION_ID}/access_tokens" in promotion_script
+assert "rm -f /workspace/github-app-private-key.pem" in promotion_script
+assert "git push --force-with-lease --set-upstream origin" in promotion_script
+assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_script
+assert "merge-base --is-ancestor" in promotion_script
+assert "helm template" in promotion_script
+assert "payload must replace the complete enrolled image set" in promotion_script
+assert "main" not in [arg for arg in promotion_script.split() if arg.startswith("HEAD:refs/heads/main")]
+
+pipelines = {
+    resource["metadata"]["name"]: resource
+    for resource in resources
+    if resource["kind"] == "Pipeline"
+}
+pipeline = pipelines["child-build"]
 pipeline_tasks = pipeline["spec"]["tasks"]
 assert [task["name"] for task in pipeline_tasks] == [
     "validate-input",
     "clone",
     "helm-validate",
     "build-push",
+    "create-promotion-payload",
 ]
 assert all(task["taskRef"]["kind"] == "Task" for task in pipeline_tasks)
 assert pipeline_tasks[1]["runAfter"] == ["validate-input"]
 assert pipeline_tasks[2]["runAfter"] == ["clone"]
 assert pipeline_tasks[3]["runAfter"] == ["helm-validate"]
+assert pipeline_tasks[4]["runAfter"] == ["build-push"]
 assert {result["name"] for result in pipeline["spec"]["results"]} == {
     "source-revision",
-    "image-url",
-    "image-tag",
-    "image-digest",
+    "images",
+    "promotion-payload",
+}
+
+promotion_pipeline = pipelines["federation-promote"]
+assert [task["name"] for task in promotion_pipeline["spec"]["tasks"]] == ["promote"]
+assert promotion_pipeline["spec"]["tasks"][0]["taskRef"] == {
+    "kind": "Task",
+    "name": "federation-promote",
+}
+assert {result["name"] for result in promotion_pipeline["spec"]["results"]} == {
+    "branch",
+    "changed",
+    "pull-request-url",
 }
 PY
 

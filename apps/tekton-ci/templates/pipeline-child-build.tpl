@@ -8,7 +8,7 @@ metadata:
   labels:
 {{- include "tekton-ci.labels" . | nindent 4 }}
 spec:
-  description: Validate, clone, render, build, and publish one enrolled Child revision.
+  description: Validate, clone, render, and publish all enrolled images for one Child revision.
   params:
     - name: child-name
       type: string
@@ -18,14 +18,9 @@ spec:
       type: string
     - name: chart-path
       type: string
-    - name: build-context
+    - name: build-targets
       type: string
-      default: .
-    - name: dockerfile
-      type: string
-      default: Dockerfile
-    - name: image-name
-      type: string
+      description: JSON array of enrolled image build targets.
   workspaces:
     - name: source
       description: PipelineRun-provided source workspace.
@@ -33,15 +28,12 @@ spec:
     - name: source-revision
       description: Exact source revision verified by the clone Task.
       value: $(tasks.clone.results.checked-out-revision)
-    - name: image-url
-      description: OCI image repository without tag or digest.
-      value: $(tasks.build-push.results.image-url)
-    - name: image-tag
-      description: Immutable source-SHA image tag.
-      value: $(tasks.build-push.results.image-tag)
-    - name: image-digest
-      description: OCI image digest for Federation promotion.
-      value: $(tasks.build-push.results.image-digest)
+    - name: images
+      description: JSON map of all immutable image identities.
+      value: $(tasks.build-push.results.images)
+    - name: promotion-payload
+      description: Versioned JSON payload consumed by the Federation promotion Pipeline.
+      value: $(tasks.create-promotion-payload.results.payload)
   tasks:
     - name: validate-input
       taskRef:
@@ -56,12 +48,6 @@ spec:
           value: $(params.source-revision)
         - name: chart-path
           value: $(params.chart-path)
-        - name: build-context
-          value: $(params.build-context)
-        - name: dockerfile
-          value: $(params.dockerfile)
-        - name: image-name
-          value: $(params.image-name)
     - name: clone
       runAfter:
         - validate-input
@@ -101,13 +87,24 @@ spec:
           value: $(params.child-name)
         - name: source-revision
           value: $(params.source-revision)
-        - name: build-context
-          value: $(params.build-context)
-        - name: dockerfile
-          value: $(params.dockerfile)
-        - name: image-name
-          value: $(params.image-name)
+        - name: build-targets
+          value: $(params.build-targets)
       workspaces:
         - name: source
           workspace: source
+    - name: create-promotion-payload
+      runAfter:
+        - build-push
+      taskRef:
+        kind: Task
+        name: {{ .Values.ci.names.promotionPayloadTask | quote }}
+      params:
+        - name: child-name
+          value: $(params.child-name)
+        - name: source-revision
+          value: $(tasks.clone.results.checked-out-revision)
+        - name: images
+          value: $(tasks.build-push.results.images)
+        - name: pipeline-run
+          value: $(context.pipelineRun.name)
 {{- end }}
