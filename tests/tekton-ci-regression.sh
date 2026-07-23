@@ -89,6 +89,8 @@ expected = {
     ("ResourceQuota", "tower-ci"),
     ("LimitRange", "tower-ci"),
     ("NetworkPolicy", "tower-ci-deny-ingress"),
+    ("Service", "tekton-events-public"),
+    ("NetworkPolicy", "tekton-events-public-ingress"),
     ("PersistentVolumeClaim", "source-workspace"),
     ("Task", "child-validate-input"),
     ("Task", "child-clone-exact-sha"),
@@ -104,15 +106,23 @@ assert actual == expected, f"unexpected Tower CI resources: {actual ^ expected}"
 assert all(resource["metadata"]["namespace"] == "tower-ci" for resource in resources)
 assert not [resource for resource in resources if resource["kind"] == "Secret"]
 assert not [resource for resource in resources if resource["kind"] in {"PipelineRun", "TaskRun"}]
+assert not [
+    resource
+    for resource in resources
+    if resource["kind"] in {"EventListener", "TriggerBinding", "TriggerTemplate"}
+]
 
-by_kind = {resource["kind"]: resource for resource in resources}
-service_account = by_kind["ServiceAccount"]
+by_identity = {
+    (resource["kind"], resource["metadata"]["name"]): resource
+    for resource in resources
+}
+service_account = by_identity[("ServiceAccount", "tekton-ci-runner")]
 assert service_account["automountServiceAccountToken"] is False
 assert "imagePullSecrets" not in service_account
 
-role = by_kind["Role"]
+role = by_identity[("Role", "tekton-ci-runner")]
 assert role["rules"] == []
-role_binding = by_kind["RoleBinding"]
+role_binding = by_identity[("RoleBinding", "tekton-ci-runner")]
 assert role_binding["roleRef"] == {
     "apiGroup": "rbac.authorization.k8s.io",
     "kind": "Role",
@@ -126,7 +136,7 @@ assert role_binding["subjects"] == [
     }
 ]
 
-quota = by_kind["ResourceQuota"]["spec"]["hard"]
+quota = by_identity[("ResourceQuota", "tower-ci")]["spec"]["hard"]
 assert quota == {
     "pods": "20",
     "requests.cpu": "4",
@@ -137,7 +147,7 @@ assert quota == {
     "requests.storage": "100Gi",
 }
 
-limit = by_kind["LimitRange"]["spec"]["limits"]
+limit = by_identity[("LimitRange", "tower-ci")]["spec"]["limits"]
 assert limit == [
     {
         "type": "Container",
@@ -146,13 +156,44 @@ assert limit == [
     }
 ]
 
-network_policy = by_kind["NetworkPolicy"]["spec"]
+network_policy = by_identity[("NetworkPolicy", "tower-ci-deny-ingress")]["spec"]
 assert network_policy == {
     "podSelector": {},
     "policyTypes": ["Ingress"],
 }
 
-pvc = by_kind["PersistentVolumeClaim"]["spec"]
+receiver_service = by_identity[("Service", "tekton-events-public")]["spec"]
+assert receiver_service == {
+    "type": "ClusterIP",
+    "selector": {
+        "app.kubernetes.io/managed-by": "EventListener",
+        "app.kubernetes.io/part-of": "Triggers",
+        "eventlistener": "repository-events",
+    },
+    "ports": [
+        {
+            "name": "http-listener",
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 8080,
+        }
+    ],
+}
+
+receiver_policy = by_identity[("NetworkPolicy", "tekton-events-public-ingress")]["spec"]
+assert receiver_policy == {
+    "podSelector": {
+        "matchLabels": {
+            "app.kubernetes.io/managed-by": "EventListener",
+            "app.kubernetes.io/part-of": "Triggers",
+            "eventlistener": "repository-events",
+        }
+    },
+    "policyTypes": ["Ingress"],
+    "ingress": [{"ports": [{"protocol": "TCP", "port": 8080}]}],
+}
+
+pvc = by_identity[("PersistentVolumeClaim", "source-workspace")]["spec"]
 assert pvc["storageClassName"] == "rook-ceph-filesystem-hot"
 assert pvc["accessModes"] == ["ReadWriteMany"]
 assert pvc["resources"]["requests"]["storage"] == "10Gi"

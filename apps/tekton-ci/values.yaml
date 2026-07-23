@@ -93,31 +93,14 @@ promotion:
     installationIDKey: installationID
     privateKeyKey: privateKey
 
-# GitHub push webhook -> Tekton EventListener -> child-build PipelineRun.
-# The HMAC Secret is runtime-managed and must never be committed in values.
-githubWebhook:
+# Stable public Service -> externally owned Tekton EventListener.
+# Repository filters, credentials, bindings, templates, and the EventListener
+# itself belong to a separate workload repository.
+publicEventReceiver:
   enabled: false
-  names:
-    serviceAccount: tekton-ci-listener
-    eventListener: child-build-github
-    triggerBinding: child-build-github
-    triggerTemplate: child-build-github
-    ingressNetworkPolicy: tekton-ci-listener-ingress
-  secret:
-    name: github-webhook-secret
-    key: secretToken
-  repository:
-    fullName: ""
-    branchRef: refs/heads/main
-  pipeline:
-    name: child-build
-    runnerServiceAccount: tekton-ci-runner
-    childName: ""
-    chartPath: chart
-    buildTargets: "[]"
-    timeout: 1h
-    workspace:
-      storageClassName: ""
-      accessModes:
-        - ReadWriteOnce
-      size: 5Gi
+  eventListenerName: repository-events
+  service:
+    name: tekton-events-public
+    port: 8080
+  networkPolicy:
+    name: tekton-events-public-ingress
