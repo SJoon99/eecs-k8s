@@ -99,12 +99,22 @@ spec:
 
         release_name="$(yq -r '.name // ""' "$release_file")"
         [ "$release_name" = "$child" ] || { printf 'release identity mismatch\n' >&2; exit 1; }
-        existing_keys="$(yq -r '.images | keys | sort | join(",")' "$values_file")"
+        # The payload defines the image set. Adding or removing an image no longer
+        # requires a preparatory human edit of the Federation values, and a first
+        # enrollment no longer needs a hand-seeded placeholder digest.
+        # Atomicity is unchanged: values.yaml is rewritten in full, never patched.
+        # The authoritative cross-check is the child chart inventory, verified by
+        # the verify-image-inventory step once the child source is checked out.
+        existing_keys="$(yq -r '(.images // {}) | keys | sort | join(",")' "$values_file")"
         payload_keys="$(yq -r '[.images[].name] | sort | join(",")' /workspace/payload.json)"
-        [ "$existing_keys" = "$payload_keys" ] || {
-          printf 'payload must replace the complete enrolled image set: expected %s, got %s\n' "$existing_keys" "$payload_keys" >&2
-          exit 1
-        }
+        printf '%s' "$payload_keys" >/workspace/payload-image-keys
+        if [ -z "$existing_keys" ]; then
+          printf 'initial image set: %s' "$payload_keys" >/workspace/image-set-change
+        elif [ "$existing_keys" = "$payload_keys" ]; then
+          printf 'image set unchanged: %s' "$payload_keys" >/workspace/image-set-change
+        else
+          printf 'image set changed: %s -> %s' "$existing_keys" "$payload_keys" >/workspace/image-set-change
+        fi
         explicit_revision="$(yq -r '.source.revision // ""' "$release_file")"
         mode="$(yq -r '.promotion.mode // ""' "$release_file")"
         yq -r '.promotion.resolvedRevision // ""' "$release_file" >/workspace/previous-resolved-revision
@@ -170,6 +180,33 @@ spec:
           }
         fi
         git -C /workspace/child-source checkout --detach "$candidate"
+
+    - name: verify-image-inventory
+      image: {{ .Values.promotion.images.yq | quote }}
+      computeResources: *promotionStepResources
+      script: |
+        #!/bin/sh
+        set -eu
+        # The child chart values.yaml image map is the authoritative inventory.
+        # Comparing the payload against it - rather than against the previously
+        # promoted Federation values - allows the set to change while still
+        # rejecting a partial build that would leave some workloads without a
+        # digest.
+        chart_values="/workspace/child-source/$(cat /workspace/source-path)/values.yaml"
+        [ -f "$chart_values" ] || {
+          printf 'child chart values not found: %s\n' "$chart_values" >&2; exit 1;
+        }
+        chart_keys="$(yq -r '(.images // {}) | keys | sort | join(",")' "$chart_values")"
+        payload_keys="$(cat /workspace/payload-image-keys)"
+        [ -n "$chart_keys" ] || {
+          printf 'child chart declares no images but the payload promotes %s\n' "$payload_keys" >&2
+          exit 1
+        }
+        [ "$chart_keys" = "$payload_keys" ] || {
+          printf 'payload does not match the child chart image inventory: chart=%s payload=%s\n' \
+            "$chart_keys" "$payload_keys" >&2
+          exit 1
+        }
 
     - name: render-candidate
       image: {{ required "ci.images.helm is required" .Values.ci.images.helm | quote }}
@@ -280,7 +317,14 @@ spec:
 
         allowed_release="releases/${child}/release.yaml"
         allowed_values="releases/${child}/values.yaml"
-        for changed in $(git diff --name-only); do
+
+        # Untracked files must be inspected too: on a first enrollment
+        # releases/<child>/values.yaml does not exist yet and is created by the
+        # update-release step, and `git diff` cannot see it. Using `git diff`
+        # alone would silently report "no change" for a pinned first enrollment
+        # and never open a pull request.
+        changed_paths="$(git status --porcelain --untracked-files=all | cut -c4-)"
+        for changed in $changed_paths; do
           [ "$changed" = "$allowed_release" ] || [ "$changed" = "$allowed_values" ] || {
             printf 'promotion modified forbidden path: %s\n' "$changed" >&2
             exit 1
@@ -291,7 +335,7 @@ spec:
         branch="ci/promote-${child}"
         printf '%s' "$branch" >"$(results.branch.path)"
 
-        if git diff --quiet; then
+        if [ -z "$changed_paths" ]; then
           printf 'false' >"$(results.changed.path)"
           : >"$(results.pull-request-url.path)"
           touch /workspace/no-change
@@ -348,7 +392,8 @@ spec:
         fi
         rm -f /workspace/existing-pull-requests.json
         title="chore(${child}): promote ${source_revision}"
-        body="Automated promotion from Tekton. Human review and merge are required."
+        image_set_change="$(cat /workspace/image-set-change 2>/dev/null || printf 'unknown')"
+        body="Automated promotion from Tekton. Human review and merge are required.\\n\\n${image_set_change}"
         request="$(printf '{"title":"%s","head":"%s","base":"%s","body":"%s"}' \
           "$title" "$branch" "$FEDERATION_BASE_BRANCH" "$body")"
         status="$(curl -sS -o /workspace/pull-request.json -w '%{http_code}' \

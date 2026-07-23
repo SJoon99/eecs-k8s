@@ -324,8 +324,26 @@ assert 'if type == "!!seq"' not in promotion_script
 assert '[.] | flatten | .[0].html_url // ""' in promotion_script
 assert "merge-base --is-ancestor" in promotion_script
 assert "helm template" in promotion_script
-assert "payload must replace the complete enrolled image set" in promotion_script
+# The payload defines the image set. The set may change (new or removed image)
+# and a first enrollment needs no hand-seeded values, so the old equality check
+# against the previously promoted Federation values is gone. Atomicity is instead
+# enforced against the child chart inventory, and the change is surfaced in the
+# pull request body.
+assert "payload must replace the complete enrolled image set" not in promotion_script
+assert "(.images // {}) | keys | sort" in promotion_script
 assert "[.images[].name] | sort" in promotion_script
+assert "initial image set: %s" in promotion_script
+assert "image set changed: %s -> %s" in promotion_script
+assert "payload does not match the child chart image inventory" in promotion_script
+promotion_step_names = [step["name"] for step in promotion_task["spec"]["steps"]]
+assert "verify-image-inventory" in promotion_step_names
+assert promotion_step_names.index("verify-image-inventory") > promotion_step_names.index("verify-candidate")
+assert promotion_step_names.index("verify-image-inventory") < promotion_step_names.index("render-candidate")
+assert "${image_set_change}" in promotion_script
+# A first enrollment creates an untracked releases/<child>/values.yaml, which
+# `git diff` cannot see. Guard the worktree with `git status` instead.
+assert "git status --porcelain --untracked-files=all" in promotion_script
+assert "git diff --quiet" not in promotion_script
 assert 'immutableTag == ("sha-" + strenv(SOURCE_REVISION))' in promotion_script
 assert '.pullPolicy = "IfNotPresent"' in promotion_script
 assert "all(.images[];" not in promotion_script
