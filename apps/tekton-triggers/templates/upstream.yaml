@@ -1,0 +1,3 @@
+{{ .Files.Get "upstream/release.yaml" }}
+---
+{{ .Files.Get "upstream/interceptors.yaml" }}
