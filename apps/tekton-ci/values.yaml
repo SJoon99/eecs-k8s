@@ -53,6 +53,7 @@ ci:
   names:
     validateInputTask: child-validate-input
     cloneTask: child-clone-exact-sha
+    deriveTargetsTask: child-derive-build-targets
     helmValidateTask: child-helm-validate
     buildPushTask: child-buildkit-build-push
     promotionPayloadTask: child-create-promotion-payload

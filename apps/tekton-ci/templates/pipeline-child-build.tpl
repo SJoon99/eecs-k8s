@@ -20,7 +20,10 @@ spec:
       type: string
     - name: build-targets
       type: string
-      description: JSON array of enrolled image build targets.
+      default: ""
+      description: >-
+        Optional JSON array of enrolled image build targets. Empty derives the
+        set from images/<name>/Dockerfile in the checked-out Child source.
     - name: allowed-kinds
       type: string
       default: ""
@@ -68,6 +71,18 @@ spec:
       workspaces:
         - name: source
           workspace: source
+    - name: derive-targets
+      runAfter:
+        - clone
+      taskRef:
+        kind: Task
+        name: {{ .Values.ci.names.deriveTargetsTask | quote }}
+      params:
+        - name: build-targets
+          value: $(params.build-targets)
+      workspaces:
+        - name: source
+          workspace: source
     - name: helm-validate
       runAfter:
         - clone
@@ -87,6 +102,7 @@ spec:
     - name: build-push
       runAfter:
         - helm-validate
+        - derive-targets
       taskRef:
         kind: Task
         name: {{ .Values.ci.names.buildPushTask | quote }}
@@ -98,7 +114,7 @@ spec:
         - name: chart-path
           value: $(params.chart-path)
         - name: build-targets
-          value: $(params.build-targets)
+          value: $(tasks.derive-targets.results.build-targets)
       workspaces:
         - name: source
           workspace: source
@@ -117,4 +133,15 @@ spec:
           value: $(tasks.build-push.results.images)
         - name: pipeline-run
           value: $(context.pipelineRun.name)
+{{- if .Values.promotion.enabled }}
+    - name: promote
+      runAfter:
+        - create-promotion-payload
+      taskRef:
+        kind: Task
+        name: {{ required "promotion.names.task is required" .Values.promotion.names.task | quote }}
+      params:
+        - name: payload
+          value: $(tasks.create-promotion-payload.results.payload)
+{{- end }}
 {{- end }}

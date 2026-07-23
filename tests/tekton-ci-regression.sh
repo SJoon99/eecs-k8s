@@ -94,6 +94,7 @@ expected = {
     ("PersistentVolumeClaim", "source-workspace"),
     ("Task", "child-validate-input"),
     ("Task", "child-clone-exact-sha"),
+    ("Task", "child-derive-build-targets"),
     ("Task", "child-helm-validate"),
     ("Task", "child-buildkit-build-push"),
     ("Task", "child-create-promotion-payload"),
@@ -206,6 +207,7 @@ tasks = {
 assert set(tasks) == {
     "child-validate-input",
     "child-clone-exact-sha",
+    "child-derive-build-targets",
     "child-helm-validate",
     "child-buildkit-build-push",
     "child-create-promotion-payload",
@@ -399,22 +401,62 @@ assert {param["name"] for param in helm_validate_task["params"]} == {
     "allowed-kinds",
 }
 pipeline_tasks = pipeline["spec"]["tasks"]
+# Tower renders with promotion.enabled=true, so the build Pipeline also carries
+# the promote Task that turns a successful build into a Federation pull request.
 assert [task["name"] for task in pipeline_tasks] == [
     "validate-input",
     "clone",
+    "derive-targets",
     "helm-validate",
     "build-push",
     "create-promotion-payload",
+    "promote",
 ]
 assert all(task["taskRef"]["kind"] == "Task" for task in pipeline_tasks)
-assert pipeline_tasks[1]["runAfter"] == ["validate-input"]
-assert pipeline_tasks[2]["runAfter"] == ["clone"]
-assert pipeline_tasks[3]["runAfter"] == ["helm-validate"]
-assert pipeline_tasks[4]["runAfter"] == ["build-push"]
+pipeline_by_name = {task["name"]: task for task in pipeline_tasks}
+assert pipeline_by_name["clone"]["runAfter"] == ["validate-input"]
+assert pipeline_by_name["derive-targets"]["runAfter"] == ["clone"]
+assert pipeline_by_name["helm-validate"]["runAfter"] == ["clone"]
+# build-push waits for both the render gate and the resolved target set.
+assert pipeline_by_name["build-push"]["runAfter"] == ["helm-validate", "derive-targets"]
+assert pipeline_by_name["create-promotion-payload"]["runAfter"] == ["build-push"]
+assert pipeline_by_name["promote"]["runAfter"] == ["create-promotion-payload"]
+
+# build-targets is optional at the Pipeline level and resolved by derive-targets.
+build_targets_param = next(
+    param for param in pipeline["spec"]["params"] if param["name"] == "build-targets"
+)
+assert build_targets_param.get("default") == ""
+derive_task = pipeline_by_name["derive-targets"]
+assert derive_task["taskRef"] == {"kind": "Task", "name": "child-derive-build-targets"}
+derive_params = {param["name"]: param["value"] for param in derive_task["params"]}
+assert derive_params["build-targets"] == "$(params.build-targets)"
 build_pipeline_params = {
-    param["name"]: param["value"] for param in pipeline_tasks[3]["params"]
+    param["name"]: param["value"] for param in pipeline_by_name["build-push"]["params"]
 }
 assert build_pipeline_params["chart-path"] == "$(params.chart-path)"
+# The build Task consumes the resolved set, not the raw Pipeline param.
+assert build_pipeline_params["build-targets"] == "$(tasks.derive-targets.results.build-targets)"
+
+# The in-Pipeline promote hop feeds the create-promotion-payload result to the
+# same federation-promote Task the standalone promotion Pipeline uses. Merge stays
+# human: this only opens the pull request.
+promote_task = pipeline_by_name["promote"]
+assert promote_task["taskRef"] == {"kind": "Task", "name": "federation-promote"}
+promote_params = {param["name"]: param["value"] for param in promote_task["params"]}
+assert promote_params["payload"] == "$(tasks.create-promotion-payload.results.payload)"
+
+# The derive-targets Task derives from images/<name>/Dockerfile and passes an
+# explicit array through unchanged.
+derive_definition = tasks["child-derive-build-targets"]
+assert {param["name"] for param in derive_definition["spec"]["params"]} == {"build-targets"}
+derive_build_param = derive_definition["spec"]["params"][0]
+assert derive_build_param["default"] == ""
+derive_script = derive_definition["spec"]["steps"][0]["script"]
+assert "images/%s/Dockerfile" in derive_script
+assert "build-targets must be a JSON array" in derive_script
+assert "no images/*/Dockerfile found and no explicit build-targets provided" in derive_script
+assert '"context":"."' in derive_script
 assert {result["name"] for result in pipeline["spec"]["results"]} == {
     "source-revision",
     "images",
