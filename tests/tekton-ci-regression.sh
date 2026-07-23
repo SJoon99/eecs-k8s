@@ -211,6 +211,39 @@ assert set(tasks) == {
     "child-create-promotion-payload",
     "federation-promote",
 }
+# The Child chart contract is enforced in CI: helm-validate renders and then
+# checks name-independent invariants (workload/policy pairing, dangling
+# selectors, release namespace, forbidden kinds). The validator is injected
+# from files/ so a single copy serves every caller.
+validate_task = tasks["child-helm-validate"]
+assert [step["name"] for step in validate_task["spec"]["steps"]] == [
+    "lint-and-render",
+    "validate-contract",
+]
+assert {param["name"] for param in validate_task["spec"]["params"]} == {
+    "child-name",
+    "chart-path",
+    "allowed-kinds",
+}
+allowed_kinds_param = next(
+    param for param in validate_task["spec"]["params"] if param["name"] == "allowed-kinds"
+)
+assert allowed_kinds_param["default"] == ""
+assert validate_task["spec"]["volumes"] == [{"name": "state", "emptyDir": {}}]
+assert validate_task["spec"]["stepTemplate"]["volumeMounts"] == [
+    {"name": "state", "mountPath": "/workspace-state"}
+]
+validate_scripts = {step["name"]: step["script"] for step in validate_task["spec"]["steps"]}
+# /tmp is per-container, so the rendered manifest has to cross on the volume.
+assert "/tmp/rendered.yaml" not in validate_scripts["lint-and-render"]
+assert "/workspace-state/rendered.yaml" in validate_scripts["lint-and-render"]
+assert 'helm template "$CHILD_NAME" "$chart" --namespace "$CHILD_NAME"' in validate_scripts["lint-and-render"]
+contract_script = validate_scripts["validate-contract"]
+assert "validate-render: profile=" in contract_script, "validator body was not injected"
+assert "--profile=child" in contract_script
+assert '--allow-kinds="$ALLOWED_KINDS"' in contract_script
+for invariant in ("V1 ", "V2 ", "V4 ", "V5 "):
+    assert invariant in contract_script, invariant
 clone_script = tasks["child-clone-exact-sha"]["spec"]["steps"][0]["script"]
 assert "git config --global" not in clone_script
 assert clone_script.count('git -c safe.directory="$SOURCE_PATH"') == 4
@@ -356,6 +389,15 @@ pipelines = {
     if resource["kind"] == "Pipeline"
 }
 pipeline = pipelines["child-build"]
+assert "allowed-kinds" in {param["name"] for param in pipeline["spec"]["params"]}
+helm_validate_task = next(
+    task for task in pipeline["spec"]["tasks"] if task["name"] == "helm-validate"
+)
+assert {param["name"] for param in helm_validate_task["params"]} == {
+    "child-name",
+    "chart-path",
+    "allowed-kinds",
+}
 pipeline_tasks = pipeline["spec"]["tasks"]
 assert [task["name"] for task in pipeline_tasks] == [
     "validate-input",

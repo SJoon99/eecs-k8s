@@ -21,6 +21,12 @@ spec:
     - name: build-targets
       type: string
       description: JSON array of enrolled image build targets.
+    - name: allowed-kinds
+      type: string
+      default: ""
+      description: >-
+        Comma-separated cluster-scoped kinds this Child is permitted to render.
+        Mirrors requiredKinds in the Federation release descriptor.
   workspaces:
     - name: source
       description: PipelineRun-provided source workspace.
@@ -73,6 +79,8 @@ spec:
           value: $(params.child-name)
         - name: chart-path
           value: $(params.chart-path)
+        - name: allowed-kinds
+          value: $(params.allowed-kinds)
       workspaces:
         - name: source
           workspace: source
