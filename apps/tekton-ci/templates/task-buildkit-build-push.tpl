@@ -193,7 +193,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       script: |
-        #!/bin/sh
+        #!/busybox/sh
         set -eu
         crane=/ko-app/crane
         insecure=""
