@@ -267,6 +267,20 @@ for task in tasks.values():
                 "requests": {"cpu": "10m", "memory": "32Mi"},
                 "limits": {"cpu": "500m", "memory": "512Mi"},
             }
+        elif task["metadata"]["name"] == "child-buildkit-build-push":
+            # build-and-push (buildkit) is the only heavy step; the yq/crane
+            # helpers are tiny. Tekton sums step limits, so the whole pod stays
+            # well under the tower-ci ResourceQuota instead of consuming all of it.
+            if step["name"] == "build-and-push":
+                assert step["computeResources"] == {
+                    "requests": {"cpu": "500m", "memory": "1Gi"},
+                    "limits": {"cpu": "2", "memory": "4Gi"},
+                }
+            else:
+                assert step["computeResources"] == {
+                    "requests": {"cpu": "50m", "memory": "64Mi"},
+                    "limits": {"cpu": "250m", "memory": "256Mi"},
+                }
         else:
             assert step["computeResources"] == {}
         security = step.get("securityContext", task["spec"].get("stepTemplate", {}).get("securityContext"))

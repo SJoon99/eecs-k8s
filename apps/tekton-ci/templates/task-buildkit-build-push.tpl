@@ -39,7 +39,13 @@ spec:
   steps:
     - name: validate-targets
       image: {{ required "promotion.images.yq is required" .Values.promotion.images.yq | quote }}
-      computeResources: {}
+      computeResources: &lightStep
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
       env:
         - name: BUILD_TARGETS
           value: $(params.build-targets)
@@ -98,7 +104,15 @@ spec:
 
     - name: build-and-push
       image: {{ required "ci.images.buildkit is required" .Values.ci.images.buildkit | quote }}
-      computeResources: {}
+      # The only heavy step. Everything else (yq/crane) is tiny. Keeping the whole
+      # pod well under the tower-ci ResourceQuota (Tekton sums step limits).
+      computeResources:
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 4Gi
       env:
         - name: BUILDKITD_FLAGS
           value: --oci-worker-no-process-sandbox
@@ -158,7 +172,7 @@ spec:
 
     - name: alias-semantic-tags
       image: {{ required "ci.images.crane is required" .Values.ci.images.crane | quote }}
-      computeResources: {}
+      computeResources: *lightStep
       env:
         - name: DOCKER_CONFIG
           value: /home/user/.docker
@@ -211,7 +225,7 @@ spec:
 
     - name: emit-images
       image: {{ .Values.promotion.images.yq | quote }}
-      computeResources: {}
+      computeResources: *lightStep
       volumeMounts:
         - name: state
           mountPath: /workspace-state
