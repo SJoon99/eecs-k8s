@@ -1,0 +1,53 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.tekton-triggers
+  annotations:
+    # Install the Triggers CRDs/controllers before tenant trigger resources.
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoPrune: true
+    autoSync: true
+    namespace: tekton-pipelines
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/workflow/tekton/triggers
+    ignoreDifferences:
+      - kind: Secret
+        name: triggers-webhook-certs
+        jsonPointers:
+          - /data
+      - kind: Secret
+        name: tekton-triggers-core-interceptors-certs
+        jsonPointers:
+          - /data
+      - group: admissionregistration.k8s.io
+        kind: MutatingWebhookConfiguration
+        name: webhook.triggers.tekton.dev
+        jsonPointers:
+          - /webhooks/0/clientConfig/caBundle
+      - group: admissionregistration.k8s.io
+        kind: ValidatingWebhookConfiguration
+        name: config.webhook.triggers.tekton.dev
+        jsonPointers:
+          - /webhooks/0/clientConfig/caBundle
+      - group: admissionregistration.k8s.io
+        kind: ValidatingWebhookConfiguration
+        name: validation.webhook.triggers.tekton.dev
+        jsonPointers:
+          - /webhooks/0/clientConfig/caBundle
+    sync:
+      createNamespace: true
+      managedNamespaceMetadata: {}
+      respectIgnoreDifferences: true
+      serverSideApply: true

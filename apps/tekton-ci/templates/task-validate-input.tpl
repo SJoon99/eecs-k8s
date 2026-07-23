@@ -18,15 +18,11 @@ spec:
       type: string
     - name: chart-path
       type: string
-    - name: build-context
-      type: string
-    - name: dockerfile
-      type: string
-    - name: image-name
-      type: string
+
   steps:
     - name: validate
       image: {{ required "ci.images.shell is required" .Values.ci.images.shell | quote }}
+      computeResources: {}
       env:
         - name: CHILD_NAME
           value: $(params.child-name)
@@ -36,12 +32,7 @@ spec:
           value: $(params.source-revision)
         - name: CHART_PATH
           value: $(params.chart-path)
-        - name: BUILD_CONTEXT
-          value: $(params.build-context)
-        - name: DOCKERFILE
-          value: $(params.dockerfile)
-        - name: IMAGE_NAME
-          value: $(params.image-name)
+
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -82,7 +73,6 @@ spec:
         }
 
         validate_dns_label "$CHILD_NAME" child-name
-        validate_dns_label "$IMAGE_NAME" image-name
 
         case "$REPO_URL" in
           https://github.com/*/*.git) ;;
@@ -98,6 +88,5 @@ spec:
         esac
 
         validate_relative_path "$CHART_PATH" chart-path
-        validate_relative_path "$BUILD_CONTEXT" build-context
-        validate_relative_path "$DOCKERFILE" dockerfile
+
 {{- end }}

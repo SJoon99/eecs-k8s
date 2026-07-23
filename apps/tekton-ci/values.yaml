@@ -53,16 +53,20 @@ ci:
   names:
     validateInputTask: child-validate-input
     cloneTask: child-clone-exact-sha
+    deriveTargetsTask: child-derive-build-targets
     helmValidateTask: child-helm-validate
     buildPushTask: child-buildkit-build-push
+    promotionPayloadTask: child-create-promotion-payload
     pipeline: child-build
   # Reproducible, multi-architecture image defaults. A cluster may override
   # these references with mirrored or separately approved digest-pinned images.
   images:
     shell: alpine@sha256:1e42bbe2508154c9126d48c2b8a75420c3544343bf86fd041fb7527e017a4b4a
-    git: alpine/git@sha256:062a01ad7a0eb17cff382bc5e26086b4d710e56dfdf001109a49b6d9bd378c
+    git: alpine/git@sha256:062a01ad7a0eb17cff382bc5e26086b4d710e56dfdfdf001109a49b6d9bd378c
     helm: alpine/helm@sha256:b80eb190fca14707e94a5090235a3f1bf2f206f26761f2890d16a1e570386236
     buildkit: moby/buildkit@sha256:cb5bb371545222c430528556acfdf424144b69897f5deaad391bd227187e90df
+    # Provides /busybox/sh (no /bin/sh) and /ko-app/crane for idempotent semantic-tag aliases.
+    crane: gcr.io/go-containerregistry/crane:debug@sha256:54b27703e6c602fbd6f95712910e9c8d45d4361a59274bde38aeec943734e424
   registry:
     host: ""
     repositoryPrefix: ""
@@ -70,3 +74,34 @@ ci:
     # The credential value is a bootstrap boundary and is never rendered by
     # this chart. The Secret must use kubernetes.io/dockerconfigjson.
     credentialsSecretName: registry-builder
+
+promotion:
+  enabled: false
+  names:
+    task: federation-promote
+    pipeline: federation-promote
+  images:
+    openssl: alpine/openssl@sha256:0cb8b9948f86d73f196cef2f828ca0b60e40c7c74d8edf9e60d9990cbb7b8b76
+    yq: mikefarah/yq@sha256:7cf28e5d67782f4b274a93a7bc54a840b553447a0807efd843d069f46bff718c
+    curl: curlimages/curl@sha256:94e9e444bcba979c2ea12e27ae39bee4cd10bc7041a472c4727a558e213744e6
+  federation:
+    repoURL: ""
+    baseBranch: main
+    githubRepository: ""
+  github:
+    credentialsSecretName: federation-promotion-github-app
+    appIDKey: appID
+    installationIDKey: installationID
+    privateKeyKey: privateKey
+
+# Stable public Service -> externally owned Tekton EventListener.
+# Repository filters, credentials, bindings, templates, and the EventListener
+# itself belong to a separate workload repository.
+publicEventReceiver:
+  enabled: false
+  eventListenerName: repository-events
+  service:
+    name: tekton-events-public
+    port: 8080
+  networkPolicy:
+    name: tekton-events-public-ingress

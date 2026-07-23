@@ -19,10 +19,12 @@ spec:
       description: Empty workspace populated with the checked-out source tree.
   results:
     - name: checked-out-revision
+      type: string
       description: Commit SHA verified after checkout.
   steps:
     - name: clone
       image: {{ required "ci.images.git is required" .Values.ci.images.git | quote }}
+      computeResources: {}
       env:
         - name: REPO_URL
           value: $(params.repo-url)
@@ -45,11 +47,11 @@ spec:
 
         rm -rf "${SOURCE_PATH:?}"/* "${SOURCE_PATH}"/.[!.]* "${SOURCE_PATH}"/..?* 2>/dev/null || true
         git init "$SOURCE_PATH"
-        git -C "$SOURCE_PATH" remote add origin "$REPO_URL"
-        git -C "$SOURCE_PATH" fetch --depth=1 origin "$SOURCE_REVISION"
-        git -C "$SOURCE_PATH" checkout --detach FETCH_HEAD
+        git -c safe.directory="$SOURCE_PATH" -C "$SOURCE_PATH" remote add origin "$REPO_URL"
+        git -c safe.directory="$SOURCE_PATH" -C "$SOURCE_PATH" fetch --depth=1 origin "$SOURCE_REVISION"
+        git -c safe.directory="$SOURCE_PATH" -C "$SOURCE_PATH" checkout --detach FETCH_HEAD
 
-        actual_revision="$(git -C "$SOURCE_PATH" rev-parse HEAD)"
+        actual_revision="$(git -c safe.directory="$SOURCE_PATH" -C "$SOURCE_PATH" rev-parse HEAD)"
         [ "$actual_revision" = "$SOURCE_REVISION" ] || {
           printf 'checkout mismatch: expected %s, got %s\n' "$SOURCE_REVISION" "$actual_revision" >&2
           exit 1
