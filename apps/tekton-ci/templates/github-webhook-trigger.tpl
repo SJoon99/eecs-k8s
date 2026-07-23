@@ -95,11 +95,14 @@ metadata:
   labels:
 {{- include "tekton-ci.labels" . | nindent 4 }}
 spec:
+  namespaceSelector: {}
+  resources: {}
   serviceAccountName: {{ $cfg.names.serviceAccount | quote }}
   triggers:
     - name: github-push
       interceptors:
         - ref:
+            kind: ClusterInterceptor
             name: github
           params:
             - name: secretRef
@@ -111,12 +114,14 @@ spec:
                 - push
         - name: expected-repository-and-branch
           ref:
+            kind: ClusterInterceptor
             name: cel
           params:
             - name: filter
               value: {{ printf "body.repository.full_name == '%s' && body.ref == '%s' && body.deleted == false" $repo $branch | quote }}
       bindings:
-        - ref: {{ $cfg.names.triggerBinding | quote }}
+        - kind: TriggerBinding
+          ref: {{ $cfg.names.triggerBinding | quote }}
       template:
         ref: {{ $cfg.names.triggerTemplate | quote }}
 ---
